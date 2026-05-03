@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Eagle | Infopoint Terminal</title>
+    <style>
+        :root {
+            --bg: #030708;
+            --panel: #0a1118;
+            --accent: #1a73e8;
+            --gold: #c5a021;
+            --text-main: #e2e8f0;
+            --text-dim: #64748b;
+        }
+
+        body, html { 
+            margin: 0; padding: 0; height: 100%; 
+            background: var(--bg); color: var(--text-main);
+            font-family: 'Inter', 'Segoe UI', sans-serif; overflow: hidden;
+        }
+
+        /* INPUT FANTASMA (Invisibile) */
+        #scannerGhost {
+            position: absolute; opacity: 0; pointer-events: none; top: -100px;
+        }
+
+        /* STRUTTURA A STEP */
+        .step {
+            display: none; height: 100vh; width: 100vw;
+            flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.5s ease;
+        }
+
+        .active { display: flex; animation: fadeIn 0.4s ease-in-out; }
+
+        /* STEP 1: STANDBY (RADAR) */
+        .radar {
+            width: 250px; height: 250px;
+            border: 1px solid var(--accent); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; box-shadow: 0 0 30px rgba(26, 115, 232, 0.1);
+        }
+        .radar::after {
+            content: ""; width: 100%; height: 100%; border-radius: 50%;
+            border: 2px solid var(--accent); position: absolute;
+            animation: pulse 2s infinite;
+        }
+
+        /* STEP 2: PROFILO VERTICALE */
+        .profile-container {
+            width: 100%; max-width: 600px;
+            display: flex; flex-direction: column; gap: 30px;
+        }
+        .info-block { border-left: 4px solid var(--accent); padding-left: 25px; }
+        .label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 3px; }
+        .value { font-size: 2rem; font-weight: 700; display: block; margin-top: 5px; }
+
+        .callsign-box {
+            background: rgba(26, 115, 232, 0.05);
+            padding: 40px; border-radius: 20px; text-align: center;
+            border: 1px solid rgba(26, 115, 232, 0.2);
+        }
+        .callsign-value {
+            font-size: 8rem; font-weight: 900; color: var(--accent);
+            text-shadow: 0 0 30px rgba(26, 115, 232, 0.3);
+            line-height: 1; margin-top: 10px;
+        }
+
+        /* STEP 3: HUB DOCUMENTI */
+        .doc-hub {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+            width: 90%; max-width: 800px;
+        }
+        .doc-card {
+            background: var(--panel); border: 1px solid rgba(255,255,255,0.05);
+            padding: 35px; border-radius: 15px; cursor: pointer;
+            transition: 0.3s; text-align: center;
+        }
+        .doc-card:hover { border-color: var(--accent); transform: translateY(-5px); background: #111b27; }
+        .doc-card.gold { border-color: var(--gold); }
+        .doc-card.gold h3 { color: var(--gold); }
+
+        /* UTILITY */
+        .btn-nav {
+            margin-top: 40px; padding: 15px 40px; background: none;
+            border: 1px solid #333; color: #888; cursor: pointer; border-radius: 50px;
+        }
+        .btn-nav:hover { color: white; border-color: white; }
+
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.4); opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body onclick="forceFocus()">
+
+    <!-- Input Fantasma: l'utente non lo vede mai -->
+    <input type="text" id="scannerGhost" autofocus autocomplete="off">
+
+    <!-- STEP 1: ATTESA -->
+    <div id="step1" class="step active">
+        <div class="radar">
+            <span style="letter-spacing: 4px; font-size: 0.7rem; color: var(--accent);">READY TO SCAN</span>
+        </div>
+        <p style="margin-top: 30px; color: var(--text-dim);">SISTEMA IN ASCOLTO...</p>
+    </div>
+
+    <!-- STEP 2: DATI CLIENTE (VERTICALE) -->
+    <div id="step2" class="step">
+        <div class="profile-container">
+            <div class="info-block">
+                <span class="label">Passeggero</span>
+                <span id="outNome" class="value">---</span>
+            </div>
+            
+            <div class="info-block">
+                <span class="label">Recapiti Identificati</span>
+                <span id="outContatti" class="value" style="font-size: 1.2rem; color: var(--text-dim);">---</span>
+            </div>
+
+            <div class="callsign-box">
+                <span class="label">Numero di Chiamata</span>
+                <div id="outChiamata" class="callsign-value">--</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 20px;">
+            <button class="btn-nav" onclick="changeStep(1)">ANNULLA</button>
+            <button class="btn-nav" style="border-color: var(--accent); color: var(--accent);" onclick="changeStep(3)">PROCEDI AI SERVIZI →</button>
+        </div>
+    </div>
+
+    <!-- STEP 3: CREAZIONE DOCUMENTI -->
+    <div id="step3" class="step">
+        <h2 style="margin-bottom: 40px; letter-spacing: 2px;">SELEZIONA TIPOLOGIA DOCUMENTO</h2>
+        <div class="doc-hub">
+            <div class="doc-card gold" onclick="generateDoc('Point6Sky')">
+                <span style="font-size: 2rem;">⭐</span>
+                <h3>Point&Sky</h3>
+                <p class="label" style="text-transform: none;">Gestione punti e fedeltà</p>
+            </div>
+            <div class="doc-card" onclick="generateDoc('Voli')">
+                <span style="font-size: 2rem;">✈️</span>
+                <h3>Richiesta Voli</h3>
+                <p class="label" style="text-transform: none;">Pianificazione e preventivi</p>
+            </div>
+            <div class="doc-card" onclick="generateDoc('Info')">
+                <span style="font-size: 2rem;">ℹ️</span>
+                <h3>Info Point</h3>
+                <p class="label" style="text-transform: none;">Assistenza e reclami</p>
+            </div>
+            <div class="doc-card" onclick="generateDoc('Custom')">
+                <span style="font-size: 2rem;">📝</span>
+                <h3>Altro</h3>
+                <p class="label" style="text-transform: none;">Richieste personalizzate</p>
+            </div>
+        </div>
+        <button class="btn-nav" onclick="changeStep(1)">CHIUDI SESSIONE CLIENTE</button>
+    </div>
+
+<script>
+    // Configurazione Web App Google Apps Script
+    const API_URL = "https://script.google.com/macros/s/AKfycbwLNQAXxWoVqFhkg0nMVN9mR2YixrQQyZAloSJ3WcWVGxKYJsaQRZG_7dpDLjIcI7dGvg/exec";
+    const ghost = document.getElementById('scannerGhost');
+    let currentClientID = "";
+
+    // Mantiene il focus sull'input invisibile per permettere la scansione
+    function forceFocus() { ghost.focus(); }
+    setInterval(forceFocus, 500);
+
+    // Gestore Scansione
+    ghost.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const rawCode = ghost.value;
+            // Correzione hardware automatica ' -> -
+            const cleanCode = rawCode.replace(/'/g, "-").trim().toUpperCase();
+            if(cleanCode) identifyClient(cleanCode);
+            ghost.value = '';
+        }
+    });
+
+    async function identifyClient(id) {
+        // Simuliamo l'avvio della ricerca
+        try {
+            const response = await fetch(`${API_URL}?action=getData&id=${id}`);
+            const data = await response.json();
+            
+            if(data.error) {
+                alert("CLIENTE NON TROVATO: " + id);
+                return;
+            }
+
+            // Popolamento dati profilo
+            currentClientID = data.id;
+            document.getElementById('outNome').innerText = `${data.nome} ${data.cognome}`;
+            document.getElementById('outContatti').innerText = `${data.email} | ${data.telefono}`;
+            document.getElementById('outChiamata').innerText = data.chiamata;
+
+            changeStep(2);
+        } catch(err) {
+            console.error("Errore di rete");
+        }
+    }
+
+    function changeStep(stepNumber) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step' + stepNumber).classList.add('active');
+        if(stepNumber === 1) currentClientID = "";
+    }
+
+    async function generateDoc(type) {
+        if(!currentClientID) return;
+        
+        console.log(`Avvio generazione documento: ${type} per ID ${currentClientID}`);
+        
+        try {
+            // Chiamata alla Web App passando ID e Tipo Documento
+            const response = await fetch(`${API_URL}?action=createDoc&id=${currentClientID}&type=${type}`);
+            const result = await response.text();
+            
+            alert(`SISTEMA: Documento [${type}] generato con successo.\nEsito: ${result}`);
+            changeStep(1); // Ritorna in standby dopo l'operazione
+        } catch(err) {
+            alert("Errore durante la creazione del documento Drive.");
+        }
+    }
+</script>
+</body>
+</html>
