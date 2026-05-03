@@ -12,7 +12,6 @@
             --gold: #c5a021;
             --text-main: #e2e8f0;
             --text-dim: #64748b;
-            --danger: #ef4444;
         }
 
         body, html { 
@@ -21,6 +20,7 @@
             font-family: 'Inter', 'Segoe UI', sans-serif; overflow: hidden;
         }
 
+        /* Input fantasma per lo scanner */
         #scannerGhost { position: absolute; opacity: 0; pointer-events: none; top: -100px; }
 
         .step {
@@ -30,9 +30,9 @@
 
         .active { display: flex; animation: fadeIn 0.4s ease-in-out; }
 
-        /* RADAR & INFO BLOCKS */
+        /* RADAR */
         .radar {
-            width: 200px; height: 200px; border: 1px solid var(--accent); border-radius: 50%;
+            width: 180px; height: 180px; border: 1px solid var(--accent); border-radius: 50%;
             display: flex; align-items: center; justify-content: center; position: relative;
         }
         .radar::after {
@@ -60,51 +60,52 @@
         .doc-card:hover { border-color: var(--accent); background: #111b27; }
         .doc-card.gold { border-color: var(--gold); }
 
-        /* FORM COMPILAZIONE */
         #compilationForm {
             width: 90%; max-width: 600px; background: var(--panel); 
             padding: 30px; border-radius: 20px; border: 1px solid var(--accent);
             display: none; flex-direction: column; gap: 20px;
         }
+        
+        /* Area di testo ora scrivibile */
         textarea {
             background: #000; border: 1px solid #333; color: white; padding: 15px;
-            border-radius: 10px; font-family: monospace; resize: none; font-size: 1rem;
+            border-radius: 10px; font-family: 'Inter', sans-serif; resize: none; font-size: 1rem;
+            outline: none;
         }
-        textarea:focus { border-color: var(--accent); outline: none; }
+        textarea:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(26, 115, 232, 0.2); }
 
         .btn-nav {
             padding: 12px 30px; background: none; border: 1px solid #333;
-            color: #888; cursor: pointer; border-radius: 50px; font-weight: bold;
+            color: #888; cursor: pointer; border-radius: 50px; font-weight: bold; transition: 0.2s;
         }
+        .btn-nav:hover { border-color: white; color: white; }
         .btn-send { background: var(--accent); color: white; border: none; }
+        .btn-send:hover { background: #1557b0; transform: scale(1.05); }
 
         @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.3); opacity: 0; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        #loader { display: none; color: var(--accent); margin-top: 10px; font-weight: bold; }
+        #loader { display: none; color: var(--accent); font-weight: bold; text-align: center; }
     </style>
 </head>
-<body onclick="forceFocus()">
+<body>
 
-    <input type="text" id="scannerGhost" autofocus autocomplete="off">
+    <input type="text" id="scannerGhost" autocomplete="off">
 
-    <!-- STEP 1: ATTESA SCAN -->
+    <!-- STEP 1 -->
     <div id="step1" class="step active">
-        <div class="radar">
-            <span style="letter-spacing: 3px; font-size: 0.6rem; color: var(--accent);">WAITING SCAN</span>
-        </div>
-        <p style="margin-top: 20px; color: var(--text-dim);">POSIZIONARE QR CODE SOTTO IL SENSORE</p>
+        <div class="radar"><span style="letter-spacing: 3px; font-size: 0.6rem; color: var(--accent);">WAITING SCAN</span></div>
+        <p style="margin-top: 20px; color: var(--text-dim);">PRONTO ALLA SCANSIONE QR</p>
     </div>
 
-    <!-- STEP 2: DATI CLIENTE IDENTIFICATI -->
+    <!-- STEP 2 -->
     <div id="step2" class="step">
         <div class="profile-container">
             <div class="info-block">
-                <span class="label">Passeggero Identificato</span>
+                <span class="label">Passeggero</span>
                 <span id="outNome" class="value">---</span>
             </div>
             <div class="callsign-box">
-                <span class="label">Numero Chiamata</span>
+                <span class="label">Identificativo Chiamata (Col G)</span>
                 <div id="outChiamata" class="callsign-value">--</div>
             </div>
         </div>
@@ -114,12 +115,10 @@
         </div>
     </div>
 
-    <!-- STEP 3: HUB SELEZIONE E COMPILAZIONE -->
+    <!-- STEP 3 -->
     <div id="step3" class="step">
-        
-        <!-- SOTTO-FASE A: SELEZIONE -->
         <div id="selectionGrid" style="display: contents;">
-            <h2 style="margin-bottom: 30px; letter-spacing: 2px;">TIPOLOGIA RAPPORTO</h2>
+            <h2 style="margin-bottom: 30px; letter-spacing: 2px;">SELEZIONA SERVIZIO</h2>
             <div class="doc-hub">
                 <div class="doc-card gold" onclick="openEditor('Point&Sky')"><h3>Point&Sky</h3></div>
                 <div class="doc-card" onclick="openEditor('Voli')"><h3>Richiesta Voli</h3></div>
@@ -129,15 +128,13 @@
             <button class="btn-nav" onclick="changeStep(1)" style="margin-top: 30px;">CHIUDI SESSIONE</button>
         </div>
 
-        <!-- SOTTO-FASE B: EDITOR -->
         <div id="compilationForm">
             <h3 id="formTitle" style="color: var(--accent); margin: 0;">EDITOR MISSIONE</h3>
-            <span class="label">Inserire dettagli tecnici per il documento finale</span>
-            <textarea id="noteMissione" rows="8" placeholder="Scrivi qui i dettagli del volo, note sui punti o assistenza..."></textarea>
-            <div id="loader">GENERAZIONE DOCUMENTO IN CORSO...</div>
+            <textarea id="noteMissione" rows="6" placeholder="Inserisci qui i dettagli..."></textarea>
+            <div id="loader">TRASMISSIONE DATI IN CORSO...</div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn-nav" onclick="closeEditor()">INDIETRO</button>
-                <button class="btn-send btn-nav" onclick="generateProfessionalDoc()">GENERA E INVIA A COMANDANTE</button>
+                <button class="btn-send btn-nav" onclick="generateProfessionalDoc()">INVIA REPORT</button>
             </div>
         </div>
     </div>
@@ -147,13 +144,18 @@
     const ghost = document.getElementById('scannerGhost');
     let currentClientID = "";
     let selectedType = "";
+    let isEditorOpen = false;
 
-    function forceFocus() { ghost.focus(); }
+    // Gestione Focus Intelligente
+    function forceFocus() { 
+        if (!isEditorOpen) ghost.focus(); 
+    }
     setInterval(forceFocus, 500);
+    document.addEventListener('click', () => { if(!isEditorOpen) ghost.focus(); });
 
-    ghost.addEventListener('keypress', function(e) {
+    ghost.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            const cleanCode = ghost.value.replace(/'/g, "-").trim().toUpperCase();
+            const cleanCode = ghost.value.trim().toUpperCase();
             if(cleanCode) identifyClient(cleanCode);
             ghost.value = '';
         }
@@ -163,54 +165,61 @@
         try {
             const response = await fetch(`${API_URL}?action=getData&id=${id}`);
             const data = await response.json();
+            
             if(data.error) {
-                alert("ERRORE: ID non valido.");
+                alert("SISTEMA: ID non trovato.");
                 return;
             }
+
             currentClientID = id;
             document.getElementById('outNome').innerText = (data.Nome + " " + data.Cognome).toUpperCase();
-            document.getElementById('outChiamata').innerText = data.Chiamata || "--";
+            
+            // Prova diverse chiavi se "Chiamata" non viene letta
+            document.getElementById('outChiamata').innerText = data.Chiamata || data.CHIAMATA || data["Chiamata"] || "--";
+            
             changeStep(2);
-        } catch(err) { alert("ERRORE DI CONNESSIONE"); }
+        } catch(err) { alert("ERRORE DI RETE"); }
     }
 
     function changeStep(n) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         document.getElementById('step' + n).classList.add('active');
-        if(n === 3) closeEditor(); // Reset editor se si torna all'hub
+        if(n !== 3) isEditorOpen = false;
     }
 
     function openEditor(type) {
+        isEditorOpen = true; // Blocca il focus automatico dello scanner
         selectedType = type;
         document.getElementById('selectionGrid').style.display = 'none';
         document.getElementById('compilationForm').style.display = 'flex';
         document.getElementById('formTitle').innerText = "REPORT: " + type.toUpperCase();
-        document.getElementById('noteMissione').value = "";
-        document.getElementById('noteMissione').focus();
+        
+        // Timeout minimo per permettere al browser di switchare il focus
+        setTimeout(() => document.getElementById('noteMissione').focus(), 100);
     }
 
     function closeEditor() {
+        isEditorOpen = false;
         document.getElementById('selectionGrid').style.display = 'contents';
         document.getElementById('compilationForm').style.display = 'none';
     }
 
     async function generateProfessionalDoc() {
         const note = document.getElementById('noteMissione').value;
-        if(!note) { alert("Inserire delle note prima di procedere."); return; }
+        if(!note) { alert("Inserire le note."); return; }
 
         document.getElementById('loader').style.display = 'block';
-        
         const finalUrl = `${API_URL}?action=submitForm&idSessione=${encodeURIComponent(currentClientID)}&tipoServizio=${encodeURIComponent(selectedType)}&noteMissione=${encodeURIComponent(note)}`;
 
         try {
             const response = await fetch(finalUrl);
             const res = await response.json();
             if(res.status === 'success') {
-                alert("PROTOCOLLO COMPLETATO: Documento inviato alla tua mail, Comandante.");
+                alert("REPORT TRASMESSO CON SUCCESSO.");
                 changeStep(1);
             }
         } catch (err) {
-            alert("ERRORE INVIO. Verifica connessione server.");
+            alert("ERRORE CRITICO DI TRASMISSIONE.");
         } finally {
             document.getElementById('loader').style.display = 'none';
         }
