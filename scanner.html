@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Eagle - Hardware Scanner</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0b1a2d; color: white; text-align: center; padding: 50px 20px; }
+        .status-box { border: 2px solid #1a73e8; padding: 20px; border-radius: 15px; display: inline-block; min-width: 300px; }
+        #inputIntercettore { position: absolute; opacity: 0; } /* Nasconde il campo ma lo mantiene attivo */
+        .panel { display: none; background: white; color: #333; padding: 30px; border-radius: 15px; max-width: 400px; margin: 20px auto; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .data-val { font-weight: bold; color: #1a73e8; font-size: 1.4em; }
+        .btn { width: 100%; padding: 15px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn-blue { background: #1a73e8; color: white; }
+    </style>
+</head>
+<body onclick="focusInput()">
+
+    <h1>GATE OPERATIVO</h1>
+    <div class="status-box" id="statusBox">
+        <p id="msg">PRONTO ALLA SCANSIONE</p>
+        <small style="color: #888;">Assicurati che lo scanner sia collegato</small>
+    </div>
+
+    <!-- Campo invisibile che cattura l'input dello scanner -->
+    <input type="text" id="inputIntercettore" autofocus>
+
+    <div id="dataPanel" class="panel">
+        <h2>Passeggero Identificato</h2>
+        <p>NOME: <span id="outNome" class="data-val"></span></p>
+        <p>CHIAMATA: <span id="outChiamata" class="data-val"></span></p>
+        <p>ID: <span id="outID" class="data-val"></span></p>
+        <hr>
+        <button class="btn btn-blue" onclick="creaLog()">GENERA LOG MISSIONE</button>
+        <button class="btn" style="background:#ddd" onclick="resetGate()">PROSSIMO</button>
+    </div>
+
+<script>
+    const WEB_APP_URL = "INSERISCI_URL_WEB_APP_QUI";
+    const input = document.getElementById('inputIntercettore');
+
+    // Mantiene il focus sul campo invisibile per catturare lo scanner
+    function focusInput() { input.focus(); }
+    setInterval(focusInput, 1000);
+
+    // Rileva quando lo scanner finisce di scrivere (preme Invio)
+    input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            const idScansionato = input.value.trim();
+            if(idScansionato) fetchData(idScansionato);
+            input.value = ''; // Pulisce per la prossima lettura
+        }
+    });
+
+    async function fetchData(id) {
+        document.getElementById('msg').innerText = "IDENTIFICAZIONE IN CORSO...";
+        try {
+            const response = await fetch(`${WEB_APP_URL}?action=getData&id=${id}`);
+            const data = await response.json();
+            
+            if(data.error) {
+                alert("ERRORE: Codice non riconosciuto.");
+                return;
+            }
+
+            document.getElementById('outNome').innerText = data.nome + " " + data.cognome;
+            document.getElementById('outChiamata').innerText = data.chiamata;
+            document.getElementById('outID').innerText = data.id;
+            
+            document.getElementById('statusBox').style.display = 'none';
+            document.getElementById('dataPanel').style.display = 'block';
+        } catch(e) {
+            alert("Errore di rete.");
+        }
+    }
+
+    async function creaLog() {
+        const id = document.getElementById('outID').innerText;
+        const res = await fetch(`${WEB_APP_URL}?action=createDoc&id=${id}`);
+        const text = await res.text();
+        alert(text);
+    }
+
+    function resetGate() {
+        document.getElementById('dataPanel').style.display = 'none';
+        document.getElementById('statusBox').style.display = 'inline-block';
+        document.getElementById('msg').innerText = "PRONTO ALLA SCANSIONE";
+        focusInput();
+    }
+</script>
+</body>
+</html>
