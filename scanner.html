@@ -45,12 +45,13 @@
 
     // Rileva quando lo scanner finisce di scrivere (preme Invio)
     input.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            const idScansionato = input.value.trim();
-            if(idScansionato) fetchData(idScansionato);
-            input.value = ''; // Pulisce per la prossima lettura
-        }
-    });
+    if (e.key === 'Enter') {
+        // .trim() rimuove spazi e ritorni a capo invisibili
+        const idScansionato = input.value.replace(/[\n\r]/g, "").trim(); 
+        if(idScansionato) fetchData(idScansionato);
+        input.value = ''; 
+    }
+});
 
     async function fetchData(id) {
         document.getElementById('msg').innerText = "IDENTIFICAZIONE IN CORSO...";
