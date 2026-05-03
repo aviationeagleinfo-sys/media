@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -14,6 +12,7 @@
             --gold: #c5a021;
             --text-main: #e2e8f0;
             --text-dim: #64748b;
+            --danger: #ef4444;
         }
 
         body, html { 
@@ -22,150 +21,139 @@
             font-family: 'Inter', 'Segoe UI', sans-serif; overflow: hidden;
         }
 
-        #scannerGhost {
-            position: absolute; opacity: 0; pointer-events: none; top: -100px;
-        }
+        #scannerGhost { position: absolute; opacity: 0; pointer-events: none; top: -100px; }
 
         .step {
             display: none; height: 100vh; width: 100vw;
             flex-direction: column; align-items: center; justify-content: center;
-            transition: all 0.5s ease;
         }
 
         .active { display: flex; animation: fadeIn 0.4s ease-in-out; }
 
+        /* RADAR & INFO BLOCKS */
         .radar {
-            width: 250px; height: 250px;
-            border: 1px solid var(--accent); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; box-shadow: 0 0 30px rgba(26, 115, 232, 0.1);
+            width: 200px; height: 200px; border: 1px solid var(--accent); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; position: relative;
         }
         .radar::after {
             content: ""; width: 100%; height: 100%; border-radius: 50%;
-            border: 2px solid var(--accent); position: absolute;
-            animation: pulse 2s infinite;
+            border: 2px solid var(--accent); position: absolute; animation: pulse 2s infinite;
         }
 
-        .profile-container {
-            width: 100%; max-width: 600px;
-            display: flex; flex-direction: column; gap: 30px;
-        }
-        .info-block { border-left: 4px solid var(--accent); padding-left: 25px; }
-        .label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 3px; }
-        .value { font-size: 2rem; font-weight: 700; display: block; margin-top: 5px; }
+        .profile-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
+        .info-block { border-left: 4px solid var(--accent); padding-left: 20px; }
+        .label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; }
+        .value { font-size: 1.8rem; font-weight: 700; display: block; }
 
         .callsign-box {
-            background: rgba(26, 115, 232, 0.05);
-            padding: 40px; border-radius: 20px; text-align: center;
-            border: 1px solid rgba(26, 115, 232, 0.2);
+            background: rgba(26, 115, 232, 0.05); padding: 20px; border-radius: 15px; 
+            text-align: center; border: 1px solid rgba(26, 115, 232, 0.2);
         }
-        .callsign-value {
-            font-size: 8rem; font-weight: 900; color: var(--accent);
-            text-shadow: 0 0 30px rgba(26, 115, 232, 0.3);
-            line-height: 1; margin-top: 10px;
-        }
+        .callsign-value { font-size: 5rem; font-weight: 900; color: var(--accent); line-height: 1; }
 
-        .doc-hub {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-            width: 90%; max-width: 800px;
-        }
+        /* HUB & FORM */
+        .doc-hub { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 700px; }
         .doc-card {
             background: var(--panel); border: 1px solid rgba(255,255,255,0.05);
-            padding: 35px; border-radius: 15px; cursor: pointer;
-            transition: 0.3s; text-align: center;
+            padding: 25px; border-radius: 12px; cursor: pointer; transition: 0.3s; text-align: center;
         }
-        .doc-card:hover { border-color: var(--accent); transform: translateY(-5px); background: #111b27; }
+        .doc-card:hover { border-color: var(--accent); background: #111b27; }
         .doc-card.gold { border-color: var(--gold); }
-        .doc-card.gold h3 { color: var(--gold); }
+
+        /* FORM COMPILAZIONE */
+        #compilationForm {
+            width: 90%; max-width: 600px; background: var(--panel); 
+            padding: 30px; border-radius: 20px; border: 1px solid var(--accent);
+            display: none; flex-direction: column; gap: 20px;
+        }
+        textarea {
+            background: #000; border: 1px solid #333; color: white; padding: 15px;
+            border-radius: 10px; font-family: monospace; resize: none; font-size: 1rem;
+        }
+        textarea:focus { border-color: var(--accent); outline: none; }
 
         .btn-nav {
-            margin-top: 40px; padding: 15px 40px; background: none;
-            border: 1px solid #333; color: #888; cursor: pointer; border-radius: 50px;
+            padding: 12px 30px; background: none; border: 1px solid #333;
+            color: #888; cursor: pointer; border-radius: 50px; font-weight: bold;
         }
-        .btn-nav:hover { color: white; border-color: white; }
+        .btn-send { background: var(--accent); color: white; border: none; }
 
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.4); opacity: 0; } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.3); opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        #loader { display: none; color: var(--accent); margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body onclick="forceFocus()">
 
     <input type="text" id="scannerGhost" autofocus autocomplete="off">
 
-    <!-- STEP 1: ATTESA -->
+    <!-- STEP 1: ATTESA SCAN -->
     <div id="step1" class="step active">
         <div class="radar">
-            <span style="letter-spacing: 4px; font-size: 0.7rem; color: var(--accent);">READY TO SCAN</span>
+            <span style="letter-spacing: 3px; font-size: 0.6rem; color: var(--accent);">WAITING SCAN</span>
         </div>
-        <p style="margin-top: 30px; color: var(--text-dim);">SISTEMA IN ASCOLTO...</p>
+        <p style="margin-top: 20px; color: var(--text-dim);">POSIZIONARE QR CODE SOTTO IL SENSORE</p>
     </div>
 
-    <!-- STEP 2: DATI CLIENTE -->
+    <!-- STEP 2: DATI CLIENTE IDENTIFICATI -->
     <div id="step2" class="step">
         <div class="profile-container">
             <div class="info-block">
-                <span class="label">Passeggero</span>
+                <span class="label">Passeggero Identificato</span>
                 <span id="outNome" class="value">---</span>
             </div>
-            
-            <div class="info-block">
-                <span class="label">Recapiti Identificati</span>
-                <span id="outContatti" class="value" style="font-size: 1.2rem; color: var(--text-dim);">---</span>
-            </div>
-
             <div class="callsign-box">
-                <span class="label">Numero di Chiamata</span>
+                <span class="label">Numero Chiamata</span>
                 <div id="outChiamata" class="callsign-value">--</div>
             </div>
         </div>
-        
-        <div style="display: flex; gap: 20px;">
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
             <button class="btn-nav" onclick="changeStep(1)">ANNULLA</button>
             <button class="btn-nav" style="border-color: var(--accent); color: var(--accent);" onclick="changeStep(3)">PROCEDI AI SERVIZI →</button>
         </div>
     </div>
 
-    <!-- STEP 3: HUB DOCUMENTI -->
+    <!-- STEP 3: HUB SELEZIONE E COMPILAZIONE -->
     <div id="step3" class="step">
-        <h2 style="margin-bottom: 40px; letter-spacing: 2px;">SELEZIONA TIPOLOGIA DOCUMENTO</h2>
-        <div class="doc-hub">
-            <div class="doc-card gold" onclick="generateDoc('Point6Sky')">
-                <span style="font-size: 2rem;">⭐</span>
-                <h3>Point&Sky</h3>
-                <p class="label" style="text-transform: none;">Gestione punti e fedeltà</p>
+        
+        <!-- SOTTO-FASE A: SELEZIONE -->
+        <div id="selectionGrid" style="display: contents;">
+            <h2 style="margin-bottom: 30px; letter-spacing: 2px;">TIPOLOGIA RAPPORTO</h2>
+            <div class="doc-hub">
+                <div class="doc-card gold" onclick="openEditor('Point&Sky')"><h3>Point&Sky</h3></div>
+                <div class="doc-card" onclick="openEditor('Voli')"><h3>Richiesta Voli</h3></div>
+                <div class="doc-card" onclick="openEditor('Info')"><h3>Info Point</h3></div>
+                <div class="doc-card" onclick="openEditor('Custom')"><h3>Altro</h3></div>
             </div>
-            <div class="doc-card" onclick="generateDoc('Voli')">
-                <span style="font-size: 2rem;">✈️</span>
-                <h3>Richiesta Voli</h3>
-                <p class="label" style="text-transform: none;">Pianificazione e preventivi</p>
-            </div>
-            <div class="doc-card" onclick="generateDoc('Info')">
-                <span style="font-size: 2rem;">ℹ️</span>
-                <h3>Info Point</h3>
-                <p class="label" style="text-transform: none;">Assistenza e reclami</p>
-            </div>
-            <div class="doc-card" onclick="generateDoc('Custom')">
-                <span style="font-size: 2rem;">📝</span>
-                <h3>Altro</h3>
-                <p class="label" style="text-transform: none;">Richieste personalizzate</p>
+            <button class="btn-nav" onclick="changeStep(1)" style="margin-top: 30px;">CHIUDI SESSIONE</button>
+        </div>
+
+        <!-- SOTTO-FASE B: EDITOR -->
+        <div id="compilationForm">
+            <h3 id="formTitle" style="color: var(--accent); margin: 0;">EDITOR MISSIONE</h3>
+            <span class="label">Inserire dettagli tecnici per il documento finale</span>
+            <textarea id="noteMissione" rows="8" placeholder="Scrivi qui i dettagli del volo, note sui punti o assistenza..."></textarea>
+            <div id="loader">GENERAZIONE DOCUMENTO IN CORSO...</div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-nav" onclick="closeEditor()">INDIETRO</button>
+                <button class="btn-send btn-nav" onclick="generateProfessionalDoc()">GENERA E INVIA A COMANDANTE</button>
             </div>
         </div>
-        <button class="btn-nav" onclick="changeStep(1)">CHIUDI SESSIONE CLIENTE</button>
     </div>
 
 <script>
-    // URL della tua Web App pubblicata su Google Apps Script
-    const API_URL = "https://script.google.com/macros/s/AKfycbw5V-Rxe0DnCVH_iWTwODn7T1d90nh-Xwo8--RwX2JDIHFyO7Kf-tU8GS4oHepdBr7xSw/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxRjSv5UxrJ4Rbxw_4j2jQVwV4IE_oqBI-ltFY5hXX4XBptvJZ5nwaxObPRv4bvXERnsQ/exec";
     const ghost = document.getElementById('scannerGhost');
     let currentClientID = "";
+    let selectedType = "";
 
     function forceFocus() { ghost.focus(); }
     setInterval(forceFocus, 500);
 
     ghost.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            const rawCode = ghost.value;
-            const cleanCode = rawCode.replace(/'/g, "-").trim().toUpperCase();
+            const cleanCode = ghost.value.replace(/'/g, "-").trim().toUpperCase();
             if(cleanCode) identifyClient(cleanCode);
             ghost.value = '';
         }
@@ -175,46 +163,56 @@
         try {
             const response = await fetch(`${API_URL}?action=getData&id=${id}`);
             const data = await response.json();
-            
             if(data.error) {
-                alert("SISTEMA: Identificativo [" + id + "] non trovato nei database di bordo.");
+                alert("ERRORE: ID non valido.");
                 return;
             }
-
-            // Mappatura dati (Assicurati che gli header nel Foglio siano Nome, Cognome, ecc.)
-            currentClientID = data["ID Sessione"] || id;
+            currentClientID = id;
             document.getElementById('outNome').innerText = (data.Nome + " " + data.Cognome).toUpperCase();
-            document.getElementById('outContatti').innerText = `${data.Email} | ${data.Telefono}`;
             document.getElementById('outChiamata').innerText = data.Chiamata || "--";
-
             changeStep(2);
-        } catch(err) {
-            console.error("Errore di rete:", err);
-            alert("ERRORE DI COMUNICAZIONE CON IL DATABASE.");
-        }
+        } catch(err) { alert("ERRORE DI CONNESSIONE"); }
     }
 
-    function changeStep(stepNumber) {
+    function changeStep(n) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById('step' + stepNumber).classList.add('active');
-        if(stepNumber === 1) currentClientID = "";
+        document.getElementById('step' + n).classList.add('active');
+        if(n === 3) closeEditor(); // Reset editor se si torna all'hub
     }
 
-    async function generateDoc(type) {
-        if(!currentClientID) return;
+    function openEditor(type) {
+        selectedType = type;
+        document.getElementById('selectionGrid').style.display = 'none';
+        document.getElementById('compilationForm').style.display = 'flex';
+        document.getElementById('formTitle').innerText = "REPORT: " + type.toUpperCase();
+        document.getElementById('noteMissione').value = "";
+        document.getElementById('noteMissione').focus();
+    }
+
+    function closeEditor() {
+        document.getElementById('selectionGrid').style.display = 'contents';
+        document.getElementById('compilationForm').style.display = 'none';
+    }
+
+    async function generateProfessionalDoc() {
+        const note = document.getElementById('noteMissione').value;
+        if(!note) { alert("Inserire delle note prima di procedere."); return; }
+
+        document.getElementById('loader').style.display = 'block';
         
+        const finalUrl = `${API_URL}?action=submitForm&idSessione=${encodeURIComponent(currentClientID)}&tipoServizio=${encodeURIComponent(selectedType)}&noteMissione=${encodeURIComponent(note)}`;
+
         try {
-            const response = await fetch(`${API_URL}?action=createDoc&id=${currentClientID}&type=${type}`);
-            const result = await response.json();
-            
-            if(result.status === "success") {
-                alert(`SISTEMA: Documento [${type}] generato. Copia inviata via mail.`);
-            } else {
-                alert("SISTEMA: Errore generazione -> " + result.message);
+            const response = await fetch(finalUrl);
+            const res = await response.json();
+            if(res.status === 'success') {
+                alert("PROTOCOLLO COMPLETATO: Documento inviato alla tua mail, Comandante.");
+                changeStep(1);
             }
-            changeStep(1); 
-        } catch(err) {
-            alert("ERRORE CRITICO: Impossibile contattare il server documenti.");
+        } catch (err) {
+            alert("ERRORE INVIO. Verifica connessione server.");
+        } finally {
+            document.getElementById('loader').style.display = 'none';
         }
     }
 </script>
