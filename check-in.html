@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Check-in Aviation Eagle</title>
+    <style>
+        :root { --primary: #1a73e8; --bg: #0b1a2d; --text: #333; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; color: var(--text); padding: 40px; border-radius: 20px; width: 100%; max-width: 350px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); text-align: center; }
+        h2 { color: var(--primary); margin-bottom: 25px; font-weight: 600; }
+        input { width: 100%; padding: 14px; margin: 12px 0; border: 1.5px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; transition: border 0.3s; }
+        input:focus { border-color: var(--primary); }
+        button { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 20px; transition: opacity 0.3s; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #loader { display: none; margin-top: 15px; color: var(--primary); font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Ottieni il tuo biglietto elettronico</h2>
+    <input type="text" id="nome" placeholder="Nome" required>
+    <input type="text" id="cognome" placeholder="Cognome" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="tel" id="tel" placeholder="Telefono (opzionale)">
+    
+    <button id="btnInvia" onclick="inviaDati()">EMETTI BIGLIETTO ELETTRONICO</button>
+    <div id="loader">Trasmissione ai sistemi di bordo...</div>
+</div>
+
+<script>
+    // INSERISCI QUI L'URL DELLA TUA WEB APP GOOGLE DOPO LA PUBBLICAZIONE
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwEKihDQBoI2jm1WmVGP_cATK7jDYOeecMRHjT9ZtgnoOGx5CAeUg5qyAvhWBsvG6mIpA/exec";
+
+    async function inviaDati() {
+        const btn = document.getElementById('btnInvia');
+        const loader = document.getElementById('loader');
+        
+        const dati = {
+            nome: document.getElementById('nome').value.trim(),
+            cognome: document.getElementById('cognome').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            telefono: document.getElementById('tel').value.trim()
+        };
+
+        if (!dati.nome || !dati.email) {
+            alert("Errore: Nome ed Email sono obbligatori per il piano di volo.");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.style.display = 'none';
+        loader.style.display = 'block';
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors", 
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dati)
+            });
+
+            alert("Biglietto Elettronico emesso correttamente!");
+            window.location.reload();
+            
+        } catch (error) {
+            alert("Errore di sistema: Impossibile contattare il server.");
+            btn.disabled = false;
+            btn.style.display = 'block';
+            loader.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
