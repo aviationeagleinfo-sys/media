@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -20,12 +21,10 @@
             font-family: 'Inter', 'Segoe UI', sans-serif; overflow: hidden;
         }
 
-        /* INPUT FANTASMA (Invisibile) */
         #scannerGhost {
             position: absolute; opacity: 0; pointer-events: none; top: -100px;
         }
 
-        /* STRUTTURA A STEP */
         .step {
             display: none; height: 100vh; width: 100vw;
             flex-direction: column; align-items: center; justify-content: center;
@@ -34,7 +33,6 @@
 
         .active { display: flex; animation: fadeIn 0.4s ease-in-out; }
 
-        /* STEP 1: STANDBY (RADAR) */
         .radar {
             width: 250px; height: 250px;
             border: 1px solid var(--accent); border-radius: 50%;
@@ -47,7 +45,6 @@
             animation: pulse 2s infinite;
         }
 
-        /* STEP 2: PROFILO VERTICALE */
         .profile-container {
             width: 100%; max-width: 600px;
             display: flex; flex-direction: column; gap: 30px;
@@ -67,7 +64,6 @@
             line-height: 1; margin-top: 10px;
         }
 
-        /* STEP 3: HUB DOCUMENTI */
         .doc-hub {
             display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
             width: 90%; max-width: 800px;
@@ -81,7 +77,6 @@
         .doc-card.gold { border-color: var(--gold); }
         .doc-card.gold h3 { color: var(--gold); }
 
-        /* UTILITY */
         .btn-nav {
             margin-top: 40px; padding: 15px 40px; background: none;
             border: 1px solid #333; color: #888; cursor: pointer; border-radius: 50px;
@@ -94,7 +89,6 @@
 </head>
 <body onclick="forceFocus()">
 
-    <!-- Input Fantasma: l'utente non lo vede mai -->
     <input type="text" id="scannerGhost" autofocus autocomplete="off">
 
     <!-- STEP 1: ATTESA -->
@@ -105,7 +99,7 @@
         <p style="margin-top: 30px; color: var(--text-dim);">SISTEMA IN ASCOLTO...</p>
     </div>
 
-    <!-- STEP 2: DATI CLIENTE (VERTICALE) -->
+    <!-- STEP 2: DATI CLIENTE -->
     <div id="step2" class="step">
         <div class="profile-container">
             <div class="info-block">
@@ -130,7 +124,7 @@
         </div>
     </div>
 
-    <!-- STEP 3: CREAZIONE DOCUMENTI -->
+    <!-- STEP 3: HUB DOCUMENTI -->
     <div id="step3" class="step">
         <h2 style="margin-bottom: 40px; letter-spacing: 2px;">SELEZIONA TIPOLOGIA DOCUMENTO</h2>
         <div class="doc-hub">
@@ -159,20 +153,17 @@
     </div>
 
 <script>
-    // Configurazione Web App Google Apps Script
+    // URL della tua Web App pubblicata su Google Apps Script
     const API_URL = "https://script.google.com/macros/s/AKfycbwEKihDQBoI2jm1WmVGP_cATK7jDYOeecMRHjT9ZtgnoOGx5CAeUg5qyAvhWBsvG6mIpA/exec";
     const ghost = document.getElementById('scannerGhost');
     let currentClientID = "";
 
-    // Mantiene il focus sull'input invisibile per permettere la scansione
     function forceFocus() { ghost.focus(); }
     setInterval(forceFocus, 500);
 
-    // Gestore Scansione
     ghost.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             const rawCode = ghost.value;
-            // Correzione hardware automatica ' -> -
             const cleanCode = rawCode.replace(/'/g, "-").trim().toUpperCase();
             if(cleanCode) identifyClient(cleanCode);
             ghost.value = '';
@@ -180,25 +171,25 @@
     });
 
     async function identifyClient(id) {
-        // Simuliamo l'avvio della ricerca
         try {
             const response = await fetch(`${API_URL}?action=getData&id=${id}`);
             const data = await response.json();
             
             if(data.error) {
-                alert("CLIENTE NON TROVATO: " + id);
+                alert("SISTEMA: Identificativo [" + id + "] non trovato nei database di bordo.");
                 return;
             }
 
-            // Popolamento dati profilo
-            currentClientID = data.id;
-            document.getElementById('outNome').innerText = `${data.nome} ${data.cognome}`;
-            document.getElementById('outContatti').innerText = `${data.email} | ${data.telefono}`;
-            document.getElementById('outChiamata').innerText = data.chiamata;
+            // Mappatura dati (Assicurati che gli header nel Foglio siano Nome, Cognome, ecc.)
+            currentClientID = data["ID Sessione"] || id;
+            document.getElementById('outNome').innerText = (data.Nome + " " + data.Cognome).toUpperCase();
+            document.getElementById('outContatti').innerText = `${data.Email} | ${data.Telefono}`;
+            document.getElementById('outChiamata').innerText = data.Chiamata || "--";
 
             changeStep(2);
         } catch(err) {
-            console.error("Errore di rete");
+            console.error("Errore di rete:", err);
+            alert("ERRORE DI COMUNICAZIONE CON IL DATABASE.");
         }
     }
 
@@ -211,17 +202,18 @@
     async function generateDoc(type) {
         if(!currentClientID) return;
         
-        console.log(`Avvio generazione documento: ${type} per ID ${currentClientID}`);
-        
         try {
-            // Chiamata alla Web App passando ID e Tipo Documento
             const response = await fetch(`${API_URL}?action=createDoc&id=${currentClientID}&type=${type}`);
-            const result = await response.text();
+            const result = await response.json();
             
-            alert(`SISTEMA: Documento [${type}] generato con successo.\nEsito: ${result}`);
-            changeStep(1); // Ritorna in standby dopo l'operazione
+            if(result.status === "success") {
+                alert(`SISTEMA: Documento [${type}] generato. Copia inviata via mail.`);
+            } else {
+                alert("SISTEMA: Errore generazione -> " + result.message);
+            }
+            changeStep(1); 
         } catch(err) {
-            alert("Errore durante la creazione del documento Drive.");
+            alert("ERRORE CRITICO: Impossibile contattare il server documenti.");
         }
     }
 </script>
