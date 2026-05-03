@@ -79,7 +79,6 @@
 
         @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.3); opacity: 0; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        #loader { display: none; color: var(--accent); text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -126,10 +125,9 @@
         <div id="compilationForm">
             <h3 id="formTitle" style="color: var(--accent); margin: 0;">EDITOR</h3>
             <textarea id="noteMissione" rows="6" placeholder="Dettagli missione..."></textarea>
-            <div id="loader">TRASMISSIONE IN CORSO...</div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn-nav" onclick="closeEditor()">INDIETRO</button>
-                <button class="btn-send btn-nav" onclick="generateProfessionalDoc()">INVIA</button>
+                <button class="btn-send btn-nav" onclick="generateProfessionalDoc()">GENERA PDF</button>
             </div>
         </div>
     </div>
@@ -138,7 +136,9 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzBYFLvK2HMeAOqeEh00An50EJhzXdwcjrJdbOT_ni9PBh0tW5ZeacSLkS8hsy6qAoXQw/exec";
     const ghost = document.getElementById('scannerGhost');
     let currentClientID = "";
+    let currentClientNome = "";
     let isEditorOpen = false;
+    let selectedType = "";
 
     function forceFocus() { if (!isEditorOpen) ghost.focus(); }
     setInterval(forceFocus, 500);
@@ -153,7 +153,6 @@
 
     async function identifyClient(id) {
         try {
-            // Invio ID pulito per ricerca in colonna F
             const response = await fetch(`${API_URL}?action=getData&id=${encodeURIComponent(id)}`);
             const data = await response.json();
             
@@ -163,10 +162,8 @@
             }
 
             currentClientID = id;
-            // Assicurati che Nome e Cognome siano nelle colonne corrette mappate nello script
-            document.getElementById('outNome').innerText = (data.Nome + " " + data.Cognome).toUpperCase();
-            
-            // Forza lettura Colonna G (Chiamata)
+            currentClientNome = (data.Nome + " " + data.Cognome).toUpperCase();
+            document.getElementById('outNome').innerText = currentClientNome;
             document.getElementById('outChiamata').innerText = data.Chiamata || data.CHIAMATA || "--";
             
             changeStep(2);
@@ -194,20 +191,98 @@
         document.getElementById('compilationForm').style.display = 'none';
     }
 
-    async function generateProfessionalDoc() {
+    function generateProfessionalDoc() {
         const note = document.getElementById('noteMissione').value;
         if(!note) { alert("Inserire dettagli."); return; }
-        document.getElementById('loader').style.display = 'block';
         
-        try {
-            const res = await fetch(`${API_URL}?action=submitForm&idSessione=${encodeURIComponent(currentClientID)}&tipoServizio=${encodeURIComponent(selectedType)}&noteMissione=${encodeURIComponent(note)}`);
-            const data = await res.json();
-            if(data.status === 'success') {
-                alert("MISSIONE COMPIUTA.");
-                changeStep(1);
-            }
-        } catch (err) { alert("ERRORE INVIO."); }
-        finally { document.getElementById('loader').style.display = 'none'; }
+        stampaRapporto({
+            id: currentClientID,
+            nome: currentClientNome,
+            tipo: selectedType,
+            note: note,
+            chiamata: document.getElementById('outChiamata').innerText
+        });
+
+        // Reset finale
+        document.getElementById('noteMissione').value = "";
+        changeStep(1);
+    }
+
+    function stampaRapporto(dati) {
+        const printWindow = window.open('', '_blank');
+        
+        // Logica loghi condizionali
+        const logoURL = (dati.tipo === 'Point&Sky') 
+            ? "https://media.aviationeagle.co.uk/Point&SkyLogo.png" 
+            : "https://media.aviationeagle.co.uk/logo.png";
+
+        const htmlContent = `
+            <html>
+            <head>
+                <title>Report_${dati.id}</title>
+                <style>
+                    body { font-family: 'Inter', sans-serif; padding: 40px; color: #1a1a1a; line-height: 1.6; }
+                    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1a73e8; padding-bottom: 20px; margin-bottom: 30px; }
+                    .logo { height: 60px; }
+                    .report-title { text-align: right; }
+                    .report-title h1 { margin: 0; font-size: 1.5rem; color: #1a73e8; }
+                    .report-title p { margin: 0; font-size: 0.8rem; color: #666; }
+                    .section { margin-bottom: 25px; }
+                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                    .box { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+                    .label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 5px; display: block; }
+                    .value { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+                    .notes-area { border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; min-height: 200px; white-space: pre-wrap; background: #fff; }
+                    .footer { margin-top: 50px; font-size: 0.7rem; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                    @media print { .no-print { display: none; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <img src="${logoURL}" class="logo">
+                    <div class="report-title">
+                        <h1>MISSION REPORT</h1>
+                        <p>ID SESSIONE: ${dati.id}</p>
+                    </div>
+                </div>
+
+                <div class="section grid">
+                    <div class="box">
+                        <span class="label">Operatore / Passeggero</span>
+                        <span class="value">${dati.nome}</span>
+                    </div>
+                    <div class="box">
+                        <span class="label">Protocollo Servizio</span>
+                        <span class="value">${dati.tipo}</span>
+                    </div>
+                    <div class="box">
+                        <span class="label">Data Emissione</span>
+                        <span class="value">${new Date().toLocaleString('it-IT')}</span>
+                    </div>
+                    <div class="box">
+                        <span class="label">Callsign / Chiamata</span>
+                        <span class="value">${dati.chiamata}</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <span class="label">Dettagli e Note Operative</span>
+                    <div class="notes-area">${dati.note}</div>
+                </div>
+
+                <div class="footer">
+                    Aviation Eagle | Technical Services Division | Documento Generato Automaticamente
+                </div>
+
+                <script>
+                    window.onload = function() { window.print(); window.close(); };
+                <\/script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
     }
 </script>
 </body>
