@@ -273,15 +273,15 @@
     </div>
 
     <script>
-        // Endpoint di produzione fornito
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpsXW4zYhxyy7Z97Ba7mV7QmWwOg2PVwFJnnsh8ZKYBASF9cggi5uMi2v1cYyZEP2j/exec"; 
+        const COGNOME_PREDEFINITO = "SCADDOZZO";
 
         const barcodeInput = document.getElementById('barcodeInput');
         const statusBar = document.getElementById('statusBar');
         const errorBanner = document.getElementById('errorBanner');
         const resultPanel = document.getElementById('resultPanel');
 
-        // Cattura l'input dello scanner hardware (Invio automatico a fine stringa)
+        // Event listener per lo scanner hardware
         barcodeInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -292,41 +292,52 @@
             }
         });
 
-        // Forza il focus continuo sul campo di input se l'operatore clicca altrove sullo schermo
+        // Forza il focus continuo
         document.addEventListener('click', () => {
             barcodeInput.focus();
         });
 
         function executeFastLookup(idOrdine) {
+            // Svuotamento istantaneo dell'input
+            barcodeInput.value = "";
+            barcodeInput.placeholder = "Caricamento ID " + idOrdine + "...";
+
             statusBar.classList.add('loading');
             errorBanner.style.display = 'none';
 
-            // Chiamata bypassata: interroga direttamente per ID Ordine (Colonna A) passandolo come parametro principale
-            fetch(`${SCRIPT_URL}?action=search&id=${encodeURIComponent(idOrdine)}&admin=true`)
-                .then(r => r.json())
+            // Costruzione URL passando l'ID, l'azione di ricerca e il cognome forzato a SCADDOZZO
+            const urlQuery = `${SCRIPT_URL}?action=search&id=${encodeURIComponent(idOrdine)}&surname=${encodeURIComponent(COGNOME_PREDEFINITO)}`;
+
+            fetch(urlQuery)
+                .then(r => {
+                    if (!r.ok) throw new Error("Errore di rete");
+                    return r.json();
+                })
                 .then(data => {
                     statusBar.classList.remove('loading');
+                    barcodeInput.placeholder = "In attesa di codice...";
                     
                     if (data.result === "success") {
                         const d = data.data;
-                        
-                        // Mostra in primo piano il Contenuto (Colonna C)
-                        document.getElementById('resContenuto').innerText = d.content || "Nessun dettaglio contenuto inserito";
+
+                        // Associazione dinamica per l'interno del colle (mappa sia 'item' che 'content')
+                        const internoColle = d.item || d.content || "Nessun dettaglio contenuto inserito";
+
+                        // Popolamento dell'interfaccia amministrativa
+                        document.getElementById('resContenuto').innerText = internoColle;
                         document.getElementById('resId').innerText = d.id || idOrdine;
-                        document.getElementById('resAnagrafica').innerText = `${d.name || ''} ${d.surname || ''}`;
-                        document.getElementById('resLocalita').innerText = `${d.city || ''} (${d.country || ''})`;
+                        document.getElementById('resAnagrafica').innerText = `${d.name || ''} ${d.surname || ''}`.trim() || "---";
+                        document.getElementById('resLocalita').innerText = d.city ? `${d.city} (${d.country || ''})` : "---";
                         document.getElementById('resCorriere').innerText = `${d.courier || '--'} - ${d.tracking || 'No Track'}`;
                         
                         resultPanel.style.display = 'block';
-                        
-                        // Resetta istantaneamente l'input per la scansione successiva senza toccare il mouse
-                        resetForm(false);
                     } else {
                         showError();
                     }
                 })
                 .catch(err => {
                     statusBar.classList.remove('loading');
+                    barcodeInput.placeholder = "In attesa di codice...";
                     showError();
                 });
         }
@@ -334,11 +345,12 @@
         function showError() {
             resultPanel.style.display = 'none';
             errorBanner.style.display = 'block';
-            resetForm(true);
+            barcodeInput.focus();
         }
 
         function resetForm(clearAllText) {
             barcodeInput.value = "";
+            barcodeInput.placeholder = "In attesa di codice...";
             barcodeInput.focus();
             if(clearAllText) {
                 resultPanel.style.display = 'none';
