@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Eagle Logistic | Admin Fast Scan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --ae-dark: #0a192f;
+            --ae-gold: #cfb53b;
+            --panel-bg: #112240;
+            --text-light: #e6f1ff;
+            --text-muted: #8892b0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--ae-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+        }
+
+        .admin-container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(207, 181, 59, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            color: var(--ae-gold);
+            font-size: 1.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .badge-admin {
+            display: inline-block;
+            background: rgba(207, 181, 59, 0.1);
+            color: var(--ae-gold);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(207, 181, 59, 0.3);
+        }
+
+        .scan-zone {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed var(--ae-gold);
+            margin-bottom: 25px;
+        }
+
+        .scan-zone label {
+            display: block;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .scan-input {
+            width: 100%;
+            padding: 15px;
+            background: var(--ae-dark);
+            border: 2px solid #233554;
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 2px;
+            transition: border-color 0.3s;
+        }
+
+        .scan-input:focus {
+            border-color: var(--ae-gold);
+            box-shadow: 0 0 10px rgba(207, 181, 59, 0.2);
+        }
+
+        .status-bar {
+            height: 4px;
+            width: 100%;
+            background: #233554;
+            margin-bottom: 25px;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .status-bar.loading::after {
+            content: '';
+            position: absolute;
+            left: -50%;
+            width: 50%;
+            height: 100%;
+            background: var(--ae-gold);
+            animation: loading-anim 0.8s linear infinite;
+        }
+
+        @keyframes loading-anim {
+            0% { left: -50%; }
+            100% { left: 100%; }
+        }
+
+        .result-panel {
+            display: none;
+            text-align: left;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 5px solid var(--ae-gold);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+        }
+
+        .content-title {
+            font-size: 0.75rem;
+            color: var(--ae-gold);
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .content-value {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .meta-item {
+            background: rgba(0, 0, 0, 0.15);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #233554;
+        }
+
+        .meta-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .meta-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .error-banner {
+            display: none;
+            background: rgba(217, 83, 79, 0.15);
+            color: #ff6b6b;
+            border: 1px solid #d9534f;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .mode-footer {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mode-toggle {
+            background: none;
+            border: none;
+            color: var(--ae-gold);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <h1>Aviation Eagle Logistic</h1>
+        <div class="badge-admin"><i class="fas fa-terminal"></i> Scanner Controllo Contenuto</div>
+
+        <div class="scan-zone">
+            <label for="barcodeInput"><i class="fas fa-barcode"></i> Scannerizza ID Ordine (Colonna A)</label>
+            <input type="text" id="barcodeInput" class="scan-input" placeholder="In attesa di codice..." autofocus autocomplete="off">
+        </div>
+
+        <div class="status-bar" id="statusBar"></div>
+
+        <div id="errorBanner" class="error-banner">
+            <i class="fas fa-exclamation-triangle"></i> ID non trovato o errore di connessione.
+        </div>
+
+        <div id="resultPanel" class="result-panel">
+            <div class="content-box">
+                <div class="content-title">Contenuto dell'Ordine (Colonna C)</div>
+                <div class="content-value" id="resContenuto">---</div>
+            </div>
+
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <div class="meta-label">ID Ordine</div>
+                    <div class="meta-value" id="resId" style="color: var(--ae-gold); font-weight: 700;">---</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Destinatario</div>
+                    <div class="meta-value" id="resAnagrafica">---</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Località di Consegna</div>
+                    <div class="meta-value" id="resLocalita">---</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Corriere / Tracking</div>
+                    <div class="meta-value" id="resCorriere">---</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mode-footer">
+            <span><i class="fas fa-bolt"></i> Modalità scansione continua attiva</span>
+            <button class="mode-toggle" onclick="resetForm(true)">Azzera Vista</button>
+        </div>
+    </div>
+
+    <script>
+        // Endpoint di produzione fornito
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpsXW4zYhxyy7Z97Ba7mV7QmWwOg2PVwFJnnsh8ZKYBASF9cggi5uMi2v1cYyZEP2j/exec"; 
+
+        const barcodeInput = document.getElementById('barcodeInput');
+        const statusBar = document.getElementById('statusBar');
+        const errorBanner = document.getElementById('errorBanner');
+        const resultPanel = document.getElementById('resultPanel');
+
+        // Cattura l'input dello scanner hardware (Invio automatico a fine stringa)
+        barcodeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const orderId = barcodeInput.value.trim();
+                if (orderId.length > 0) {
+                    executeFastLookup(orderId);
+                }
+            }
+        });
+
+        // Forza il focus continuo sul campo di input se l'operatore clicca altrove sullo schermo
+        document.addEventListener('click', () => {
+            barcodeInput.focus();
+        });
+
+        function executeFastLookup(idOrdine) {
+            statusBar.classList.add('loading');
+            errorBanner.style.display = 'none';
+
+            // Chiamata bypassata: interroga direttamente per ID Ordine (Colonna A) passandolo come parametro principale
+            fetch(`${SCRIPT_URL}?action=search&id=${encodeURIComponent(idOrdine)}&admin=true`)
+                .then(r => r.json())
+                .then(data => {
+                    statusBar.classList.remove('loading');
+                    
+                    if (data.result === "success") {
+                        const d = data.data;
+                        
+                        // Mostra in primo piano il Contenuto (Colonna C)
+                        document.getElementById('resContenuto').innerText = d.content || "Nessun dettaglio contenuto inserito";
+                        document.getElementById('resId').innerText = d.id || idOrdine;
+                        document.getElementById('resAnagrafica').innerText = `${d.name || ''} ${d.surname || ''}`;
+                        document.getElementById('resLocalita').innerText = `${d.city || ''} (${d.country || ''})`;
+                        document.getElementById('resCorriere').innerText = `${d.courier || '--'} - ${d.tracking || 'No Track'}`;
+                        
+                        resultPanel.style.display = 'block';
+                        
+                        // Resetta istantaneamente l'input per la scansione successiva senza toccare il mouse
+                        resetForm(false);
+                    } else {
+                        showError();
+                    }
+                })
+                .catch(err => {
+                    statusBar.classList.remove('loading');
+                    showError();
+                });
+        }
+
+        function showError() {
+            resultPanel.style.display = 'none';
+            errorBanner.style.display = 'block';
+            resetForm(true);
+        }
+
+        function resetForm(clearAllText) {
+            barcodeInput.value = "";
+            barcodeInput.focus();
+            if(clearAllText) {
+                resultPanel.style.display = 'none';
+                errorBanner.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
