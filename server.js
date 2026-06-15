@@ -8,18 +8,18 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-// Serve i file statici (se hai fogli di stile esterni) e associa la radice a search.html
+// Serve i file statici della directory corrente
 app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 3000;
 const FLIGHT_API_KEY = process.env.FLIGHTAPI_KEY || 'YOUR_API_KEY';
 
-// ROTTA INTERFACCIA: Serve il frontend search.html quando si naviga sulla root (http://localhost:3000)
+// ROTTA INTERFACCIA: Serve il frontend search.html sulla root
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'search.html'));
 });
 
-// API ENDPOINT: Ricerca voli reali
+// API ENDPOINT: Ricerca voli reali con gestione di sicurezza
 app.get('/api/scan-flights', async (req, res) => {
     const { origin, destination, date } = req.query;
 
@@ -36,30 +36,40 @@ app.get('/api/scan-flights', async (req, res) => {
         
         const formattedFlights = [];
         
-        // Parsing e normalizzazione dei dati JSON reali per la redazione
-        if (rawData.itineraries && rawData.itineraries.length > 0) {
+        // CORREZIONE: Controllo di sicurezza per evitare crash se i nodi principali sono assenti o vuoti
+        if (rawData && rawData.itineraries && rawData.itineraries.length > 0 && rawData.legs) {
             rawData.itineraries.slice(0, 15).forEach(itinerary => {
+                // Salta l'itinerario se non ha opzioni di prezzo valide
+                if (!itinerary.pricingOptions || itinerary.pricingOptions.length === 0) return;
+                
                 const price = itinerary.pricingOptions[0].price.amount;
                 const legs = rawData.legs.find(l => l.id === itinerary.legs[0]);
                 
-                if (legs) {
-                    const segment = rawData.segments.find(s => s.id === legs.segmentIds[0]);
+                if (legs && legs.segmentIds && legs.segmentIds.length > 0) {
+                    const segment = rawData.segments ? rawData.segments.find(s => s.id === legs.segmentIds[0]) : null;
                     const airlineCode = segment ? segment.marketingCarrierCode : 'Unknown';
-                    const airlineName = rawData.carriers.find(c => c.id === airlineCode)?.name || airlineCode;
+                    const airlineName = rawData.carriers ? (rawData.carriers.find(c => c.id === airlineCode)?.name || airlineCode) : airlineCode;
+
+                    // CORREZIONE: Parsing sicuro degli orari per evitare errori di stringa non definita
+                    const depTime = legs.departureTime && legs.departureTime.includes('T') ? legs.departureTime.split('T')[1].substring(0, 5) : 'N/D';
+                    const arrTime = legs.arrivalTime && legs.arrivalTime.includes('T') ? legs.arrivalTime.split('T')[1].substring(0, 5) : 'N/D';
 
                     formattedFlights.push({
                         carrier: airlineName,
                         flightNumber: segment ? segment.flightNumber : 'N/D',
-                        departureTime: legs.departureTime.split('T')[1].substring(0, 5),
-                        arrivalTime: legs.arrivalTime.split('T')[1].substring(0, 5),
-                        stops: legs.stopsCount,
+                        departureTime: depTime,
+                        arrivalTime: arrTime,
+                        stops: legs.stopsCount || 0,
                         price: Math.round(price),
                         currency: 'EUR'
                     });
                 }
             });
-        } else {
-            // Fallback locale di simulazione operativa in caso di assenza temporanea di segnale API
+        }
+
+        // CORREZIONE: Il Fallback si attiva SE l'API è online ma non restituisce risultati commerciali utili
+        if (formattedFlights.length === 0) {
+            console.log(`[Aviation Eagle Engine] Avviso: Nessun volo live trovato. Attivazione simulazione operativa.`);
             formattedFlights.push(
                 { carrier: 'ITA Airways', flightNumber: 'AZ402', departureTime: '10:15', arrivalTime: '12:05', stops: 0, price: 118, currency: 'EUR' },
                 { carrier: 'KLM', flightNumber: 'KL1620', departureTime: '12:40', arrivalTime: '14:35', stops: 0, price: 142, currency: 'EUR' },
@@ -68,7 +78,7 @@ app.get('/api/scan-flights', async (req, res) => {
             );
         }
 
-        // Ordinamento asincrono orientato alla ricerca di tariffe d'errore o promozioni (Prezzo Crescente)
+        // Ordinamento tariffe (Prezzo Crescente)
         formattedFlights.sort((a, b) => a.price - b.price);
 
         return res.json({
