@@ -1,15 +1,9 @@
-# Dipendenze
+# Tracciamento Sicurezza: Mai caricare le chiavi private
+.env
+
+# Dipendenze: Vengono reinstallate via npm sul server di produzione
 node_modules/
 
-# Configizzazioni locali e segreti
-.env
-.env.local
-
-# Log di sistema
+# File di sistema e log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Sistemi operativi
 .DS_Store
-Thumbs.db
