@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Eagle - Loyalty Control Center</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        header h1 {
+            font-size: 20px;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .config-section {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px dashed var(--border);
+        }
+
+        .config-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .profile-card {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .profile-card.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .profile-row:last-child {
+            border-bottom: none;
+        }
+
+        .profile-label {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .profile-value {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .points-badge {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn-action {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .btn-add { background-color: var(--success); }
+        .btn-add:hover { background-color: #0d9488; }
+        .btn-remove { background-color: var(--danger); }
+        .btn-remove:hover { background-color: #dc2626; }
+
+        .status-message {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Loyalty Control Center</h1>
+        <p>Aviation Eagle Network Operations</p>
+    </header>
+
+    <!-- Configurazione Endpoints Wix (Facile da aggiornare) -->
+    <div class="config-section">
+        <div class="config-title">Configurazione Collegamento API Wix</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <div>
+                <label style="font-size: 9px;">URL Base Wix Site</label>
+                <input type="text" id="wixBaseUrl" value="https://www.aviationeagle.co.uk/_functions" style="padding: 6px; font-size: 11px;">
+            </div>
+            <div>
+                <label style="font-size: 9px;">Secret Token Sicurezza</label>
+                <input type="password" id="apiSecretToken" value="AE_SECURE_TOKEN_2026" style="padding: 6px; font-size: 11px;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Sezione Input/Scansione Codice -->
+    <div class="input-group">
+        <label for="customerCode">Scansiona o Inserisci Codice Account / Email</label>
+        <input type="text" id="customerCode" placeholder="Esempio: customer-email@domain.com o ID Contatto" autofocus>
+    </div>
+
+    <button class="btn" id="btnCerca">Intervenga e Carica Account</button>
+
+    <div id="statusMsg" class="status-message"></div>
+
+    <!-- Card Dati Profilo Fedeltà Estratti -->
+    <div class="profile-card" id="profileCard">
+        <div class="profile-row">
+            <span class="profile-label">Nome Cliente:</span>
+            <span class="profile-value" id="valNome">-</span>
+        </div>
+        <div class="profile-row">
+            <span class="profile-label">Cognome:</span>
+            <span class="profile-value" id="valCognome">-</span>
+        </div>
+        <div class="profile-row">
+            <span class="profile-label">ID Account Wix:</span>
+            <span class="profile-value" id="valID" style="font-size: 11px; color: var(--text-muted);">-</span>
+        </div>
+        <div class="profile-row" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 12px;">
+            <span class="profile-label" style="font-size: 16px; align-self: center;">Saldo Punti Attuale:</span>
+            <span class="profile-value points-badge" id="valPunti" style="font-size: 18px;">0</span>
+        </div>
+
+        <!-- Pannello Operativo Aggiunta/Rimozione -->
+        <div style="margin-top: 16px;">
+            <label for="pointsDelta">Quantità Punti da Modificare</label>
+            <input type="number" id="pointsDelta" value="10" min="1" style="text-align: center; font-size: 16px;">
+            
+            <div class="actions-grid">
+                <button class="btn-action btn-add" id="btnAdd">Aggiungi Punti</button>
+                <button class="btn-action btn-remove" id="btnRemove">Rimuovi Punti</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const wixBaseUrlInput = document.getElementById('wixBaseUrl');
+    const apiSecretTokenInput = document.getElementById('apiSecretToken');
+    const customerCodeInput = document.getElementById('customerCode');
+    const btnCerca = document.getElementById('btnCerca');
+    const profileCard = document.getElementById('profileCard');
+    const statusMsg = document.getElementById('statusMsg');
+
+    // Elementi Output Dati
+    const valNome = document.getElementById('valNome');
+    const valCognome = document.getElementById('valCognome');
+    const valID = document.getElementById('valID');
+    const valPunti = document.getElementById('valPunti');
+    const pointsDelta = document.getElementById('pointsDelta');
+
+    let currentAccountId = null;
+
+    // Funzione Utility per mostrare i messaggi di stato
+    function showStatus(text, type) {
+        statusMsg.innerText = text;
+        statusMsg.style.display = 'block';
+        statusMsg.style.backgroundColor = type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+        statusMsg.style.color = type === 'error' ? '#f87171' : '#34d399';
+    }
+
+    // Gestione Scansione automatica: se un barcode scanner emula la tastiera + INVIO
+    customerCodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            fetchAccountData();
+        }
+    });
+
+    btnCerca.addEventListener('click', fetchAccountData);
+
+    // 1. CARICAMENTO DATI DA WIX (GET)
+    async function fetchAccountData() {
+        const identifier = customerCodeInput.value.trim();
+        const baseUrl = wixBaseUrlInput.value.trim();
+        const token = apiSecretTokenInput.value.trim();
+
+        if (!identifier) {
+            showStatus('Inserire un codice o un'email valida.', 'error');
+            return;
+        }
+
+        showStatus('In connessione con il mainframe Wix...', 'success');
+        profileCard.classList.remove('active');
+
+        try {
+            // Invio chiamata REST HTTP Function a Wix
+            const response = await fetch(`${baseUrl}/getLoyaltyMember?identifier=${encodeURIComponent(identifier)}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Errore Server: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Mappatura dei dati ricevuti dall'API di Wix alla UI HTML
+                valNome.innerText = data.member.firstName || 'N/D';
+                valCognome.innerText = data.member.lastName || 'N/D';
+                valID.innerText = data.member.accountId;
+                valPunti.innerText = data.member.pointsBalance;
+                
+                currentAccountId = data.member.accountId; // Salviamo l'ID per le operazioni successive
+                
+                showStatus('Dati sincronizzati con successo.', 'success');
+                profileCard.classList.add('active');
+            } else {
+                showStatus(`Account non trovato: ${data.message}`, 'error');
+            }
+
+        } catch (error) {
+            showStatus(`Errore di collegamento: ${error.message}`, 'error');
+            console.error(error);
+        }
+    }
+
+    // 2. MODIFICA PUNTI (POST)
+    async function adjustPoints(actionType) {
+        const baseUrl = wixBaseUrlInput.value.trim();
+        const token = apiSecretTokenInput.value.trim();
+        let delta = parseInt(pointsDelta.value);
+
+        if (!currentAccountId || isNaN(delta)) return;
+
+        // Se l'azione è "rimuovi", trasformiamo il delta in valore negativo
+        if (actionType === 'remove') {
+            delta = -delta;
+        }
+
+        showStatus('Aggiornamento saldo punti in corso...', 'success');
+
+        try {
+            const response = await fetch(`${baseUrl}/adjustLoyaltyPoints`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    accountId: currentAccountId,
+                    amount: delta
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Impossibile aggiornare i punti. Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Aggiorna il contatore punti a schermo con il nuovo saldo restituito da Wix
+                valPunti.innerText = data.newBalance;
+                showStatus(`Punti aggiornati correttamente! Variazione: ${delta}`, 'success');
+            } else {
+                showStatus(`Errore aggiornamento: ${data.message}`, 'error');
+            }
+
+        } catch (error) {
+            showStatus(`Errore di rete: ${error.message}`, 'error');
+        }
+    }
+
+    document.getElementById('btnAdd').addEventListener('click', () => adjustPoints('add'));
+    document.getElementById('btnRemove').addEventListener('click', () => adjustPoints('remove'));
+</script>
+
+</body>
+</html>
