@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aviation Eagle - Secure Access</title>
+  <link rel="icon" href="https://media.aviationeagle.co.uk/favicon.ico" type="image/x-icon">
+  <style>
+    :root {
+      --ae-orange: #ff6600;
+      --ae-black: #111111;
+      --ae-white: #ffffff;
+      /* Configurazione Glassmorphism */
+      --glass-bg: rgba(255, 255, 255, 0.45);
+      --glass-border: rgba(17, 17, 17, 0.15);
+      --glass-shadow: rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+      color: var(--ae-black);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 450px;
+      padding: 35px 30px;
+      box-sizing: border-box;
+      text-align: center;
+      
+      /* Stile Liquid Glass */
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-top: 5px solid var(--ae-orange);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px 0 var(--glass-shadow);
+    }
+
+    .brand-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 35px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(17, 17, 17, 0.05);
+    }
+
+    .logo-main { height: 42px; object-fit: contain; }
+    .logo-partner { height: 32px; object-fit: contain; }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 25px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--ae-black);
+      border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--ae-orange);
+      background: var(--ae-white);
+      box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
+    }
+
+    button {
+      background-color: var(--ae-black);
+      color: var(--ae-white);
+      border: 1px solid var(--ae-black);
+      padding: 14px 25px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: transparent;
+      color: var(--ae-orange);
+      border-color: var(--ae-orange);
+    }
+
+    .error-message {
+      color: #d93838;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: none;
+    }
+
+    .success-screen { display: none; }
+
+    /* Box di contenimento con altezza ottimizzata */
+    .company-logo-box {
+      margin: 25px 0;
+      padding: 15px;
+      height: 90px; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed var(--ae-orange);
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    /* Controllo rigido sulle dimensioni massime del logo aziendale */
+    .company-logo { 
+      max-width: 180px; 
+      max-height: 60px; 
+      width: auto;
+      height: auto;
+      object-fit: contain; 
+    }
+
+    .doc-link {
+      display: inline-block;
+      margin-top: 15px;
+      background-color: transparent;
+      color: var(--ae-black);
+      border: 2px solid var(--ae-black);
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      text-decoration: none;
+      text-transform: uppercase;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    
+    .doc-link:hover { 
+      color: var(--ae-white); 
+      background-color: var(--ae-orange);
+      border-color: var(--ae-orange);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="brand-header">
+      <img src="https://media.aviationeagle.co.uk/Aviation-Eagle-Compact-TM-RBG.png" alt="AviatioN Eagle Logo" class="logo-main">
+      <img src="https://media.aviationeagle.co.uk/Point_SkyLogo-removebg-preview.png" alt="Point&Sky Logo" class="logo-partner">
+    </div>
+
+    <div id="loginScreen">
+      <h1>Accesso Riservato</h1>
+      <input type="text" id="accessCode" placeholder="Inserisci il codice operativo..." autocomplete="off">
+      <button onclick="submitCode()">Verifica Identità</button>
+      <div id="errorMsg" class="error-message"></div>
+    </div>
+
+    <div id="successScreen" class="success-screen">
+      <h1 id="welcomeCompany">Documentazione Sbloccata</h1>
+      <div class="company-logo-box">
+        <img id="dynamicCompanyLogo" src="" alt="" class="company-logo">
+      </div>
+      <p style="font-size: 0.95rem; margin-bottom: 20px;">I permessi di sicurezza sono stati validati correttamente.</p>
+      <a id="secureDocLink" href="#" target="_blank" class="doc-link">Apri File Protetto ➔</a>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw72EXUaktQlqvykNgCerKy8ahZ2gZ4sPjzuGIJjz2UPtkUO9VkawEtWQNXo4bqxB7C/exec";
+
+    function submitCode() {
+      const code = document.getElementById('accessCode').value;
+      const errorMsg = document.getElementById('errorMsg');
+      
+      if(!code) {
+        errorMsg.textContent = "Inserisci un codice per procedere.";
+        errorMsg.style.display = "block";
+        return;
+      }
+
+      errorMsg.style.display = "none";
+
+      const secureCheckUrl = `${GOOGLE_SCRIPT_URL}?code=${encodeURIComponent(code)}`;
+      
+      fetch(secureCheckUrl)
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
+        if (data.success) {
+          document.getElementById('loginScreen').style.display = 'none';
+          document.getElementById('successScreen').style.display = 'block';
+          
+          const logoImg = document.getElementById('dynamicCompanyLogo');
+          logoImg.src = data.companyLogo;
+          logoImg.alt = data.companyName; 
+          
+          document.getElementById('welcomeCompany').textContent = "Area " + data.companyName;
+          document.getElementById('secureDocLink').href = data.documentUrl;
+        } else {
+          errorMsg.textContent = data.message;
+          errorMsg.style.display = "block";
+        }
+      })
+      .catch(err => {
+        errorMsg.textContent = "Errore di connessione o codice non autorizzato.";
+        errorMsg.style.display = "block";
+      });
+    }
+  </script>
+</body>
+</html>
