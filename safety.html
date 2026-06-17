@@ -199,6 +199,7 @@
             font-size: 13px;
             text-align: center;
             display: none;
+            word-break: break-word;
         }
 
         @keyframes fadeIn {
@@ -215,7 +216,7 @@
         <p>Aviation Eagle Network Operations</p>
     </header>
 
-    <!-- Configurazione Endpoints Wix (Facile da aggiornare) -->
+    <!-- Configurazione Endpoints Wix -->
     <div class="config-section">
         <div class="config-title">Configurazione Collegamento API Wix</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
@@ -232,8 +233,8 @@
 
     <!-- Sezione Input/Scansione Codice -->
     <div class="input-group">
-        <label for="customerCode">Scansiona o Inserisci Codice Account / Email</label>
-        <input type="text" id="customerCode" placeholder="Esempio: customer-email@domain.com o ID Contatto" autofocus>
+        <label for="customerCode">Cerca per Email, Telefono, Nome o ID Account</label>
+        <input type="text" id="customerCode" placeholder="Esempio: Nome Cognome, Email o Telefono" autofocus>
     </div>
 
     <button class="btn" id="btnCerca">Intervenga e Carica Account</button>
@@ -297,7 +298,7 @@
         statusMsg.style.color = type === 'error' ? '#f87171' : '#34d399';
     }
 
-    // Gestione Scansione automatica: se un barcode scanner emula la tastiera + INVIO
+    // Gestione Scansione o INVIO da tastiera
     customerCodeInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             fetchAccountData();
@@ -313,7 +314,7 @@
         const token = apiSecretTokenInput.value.trim();
 
         if (!identifier) {
-            showStatus('Inserire un codice o un'email valida.', 'error');
+            showStatus('Inserire un codice, nome o un recapito valido.', 'error');
             return;
         }
 
@@ -321,8 +322,10 @@
         profileCard.classList.remove('active');
 
         try {
-            // Invio chiamata REST HTTP Function a Wix
-            const response = await fetch(`${baseUrl}/getLoyaltyMember?identifier=${encodeURIComponent(identifier)}`, {
+            // Nota: Corretto l'escape e la codifica dell'URL query string
+            const targetUrl = `${baseUrl}/getLoyaltyMember?identifier=${encodeURIComponent(identifier)}`;
+            
+            const response = await fetch(targetUrl, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -337,22 +340,22 @@
             const data = await response.json();
 
             if (data.success) {
-                // Mappatura dei dati ricevuti dall'API di Wix alla UI HTML
+                // Sincronizzazione con le proprietà corrette dal backend 'member'
                 valNome.innerText = data.member.firstName || 'N/D';
                 valCognome.innerText = data.member.lastName || 'N/D';
                 valID.innerText = data.member.accountId;
                 valPunti.innerText = data.member.pointsBalance;
                 
-                currentAccountId = data.member.accountId; // Salviamo l'ID per le operazioni successive
+                currentAccountId = data.member.accountId; 
                 
-                showStatus('Dati sincronizzati con successo.', 'success');
+                showStatus('Dati passeggero sincronizzati con successo.', 'success');
                 profileCard.classList.add('active');
             } else {
-                showStatus(`Account non trovato: ${data.message}`, 'error');
+                showStatus(`Scansione fallita: ${data.message}`, 'error');
             }
 
         } catch (error) {
-            showStatus(`Errore di collegamento: ${error.message}`, 'error');
+            showStatus(`Errore di collegamento sub-spaziale: ${error.message}`, 'error');
             console.error(error);
         }
     }
@@ -363,14 +366,16 @@
         const token = apiSecretTokenInput.value.trim();
         let delta = parseInt(pointsDelta.value);
 
-        if (!currentAccountId || isNaN(delta)) return;
+        if (!currentAccountId || isNaN(delta)) {
+            showStatus('Selezionare prima un account valido.', 'error');
+            return;
+        }
 
-        // Se l'azione è "rimuovi", trasformiamo il delta in valore negativo
         if (actionType === 'remove') {
             delta = -delta;
         }
 
-        showStatus('Aggiornamento saldo punti in corso...', 'success');
+        showStatus('Aggiornamento saldo punti nei database Wix...', 'success');
 
         try {
             const response = await fetch(`${baseUrl}/adjustLoyaltyPoints`, {
@@ -392,7 +397,6 @@
             const data = await response.json();
 
             if (data.success) {
-                // Aggiorna il contatore punti a schermo con il nuovo saldo restituito da Wix
                 valPunti.innerText = data.newBalance;
                 showStatus(`Punti aggiornati correttamente! Variazione: ${delta}`, 'success');
             } else {
