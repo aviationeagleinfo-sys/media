@@ -216,7 +216,6 @@
         <p>Aviation Eagle Network Operations</p>
     </header>
 
-    <!-- Configurazione Endpoints Wix -->
     <div class="config-section">
         <div class="config-title">Configurazione Collegamento API Wix</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
@@ -231,7 +230,6 @@
         </div>
     </div>
 
-    <!-- Sezione Input/Scansione Codice -->
     <div class="input-group">
         <label for="customerCode">Cerca per Email, Telefono, Nome o ID Account</label>
         <input type="text" id="customerCode" placeholder="Esempio: Nome Cognome, Email o Telefono" autofocus>
@@ -241,7 +239,6 @@
 
     <div id="statusMsg" class="status-message"></div>
 
-    <!-- Card Dati Profilo Fedeltà Estratti -->
     <div class="profile-card" id="profileCard">
         <div class="profile-row">
             <span class="profile-label">Nome Cliente:</span>
@@ -260,7 +257,6 @@
             <span class="profile-value points-badge" id="valPunti" style="font-size: 18px;">0</span>
         </div>
 
-        <!-- Pannello Operativo Aggiunta/Rimozione -->
         <div style="margin-top: 16px;">
             <label for="pointsDelta">Quantità Punti da Modificare</label>
             <input type="number" id="pointsDelta" value="10" min="1" style="text-align: center; font-size: 16px;">
@@ -281,7 +277,6 @@
     const profileCard = document.getElementById('profileCard');
     const statusMsg = document.getElementById('statusMsg');
 
-    // Elementi Output Dati
     const valNome = document.getElementById('valNome');
     const valCognome = document.getElementById('valCognome');
     const valID = document.getElementById('valID');
@@ -290,7 +285,6 @@
 
     let currentAccountId = null;
 
-    // Funzione Utility per mostrare i messaggi di stato
     function showStatus(text, type) {
         statusMsg.innerText = text;
         statusMsg.style.display = 'block';
@@ -298,7 +292,6 @@
         statusMsg.style.color = type === 'error' ? '#f87171' : '#34d399';
     }
 
-    // Gestione Scansione o INVIO da tastiera
     customerCodeInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             fetchAccountData();
@@ -307,7 +300,6 @@
 
     btnCerca.addEventListener('click', fetchAccountData);
 
-    // 1. CARICAMENTO DATI DA WIX (GET)
     async function fetchAccountData() {
         const identifier = customerCodeInput.value.trim();
         const baseUrl = wixBaseUrlInput.value.trim();
@@ -322,7 +314,6 @@
         profileCard.classList.remove('active');
 
         try {
-            // Nota: Corretto l'escape e la codifica dell'URL query string
             const targetUrl = `${baseUrl}/getLoyaltyMember?identifier=${encodeURIComponent(identifier)}`;
             
             const response = await fetch(targetUrl, {
@@ -340,7 +331,6 @@
             const data = await response.json();
 
             if (data.success) {
-                // Sincronizzazione con le proprietà corrette dal backend 'member'
                 valNome.innerText = data.member.firstName || 'N/D';
                 valCognome.innerText = data.member.lastName || 'N/D';
                 valID.innerText = data.member.accountId;
@@ -360,7 +350,6 @@
         }
     }
 
-    // 2. MODIFICA PUNTI (POST)
     async function adjustPoints(actionType) {
         const baseUrl = wixBaseUrlInput.value.trim();
         const token = apiSecretTokenInput.value.trim();
