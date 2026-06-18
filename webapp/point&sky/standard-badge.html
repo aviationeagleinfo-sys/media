@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore Tessere Fedeltà | Point&Sky</title>
+    <link class="rounded-full" rel="icon" type="image/png" href="favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bwip-js@3.1.0/dist/bwip-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4">
+
+    <main class="w-full max-w-md flex flex-col gap-6">
+        
+        <section class="bg-white p-6 rounded-3xl shadow-md border border-slate-200">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-blue-50 text-[#0b1b3d] p-2 rounded-xl text-xl">🪪</div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">Generatore Tessere Fedeltà</h1>
+                    <p class="text-xs text-slate-500">Point&Sky | Aviation Eagle</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <input type="text" id="input-codice" placeholder="Inserisci Numero Tessera..." class="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0b1b3d] outline-none transition">
+                <button id="btn-cerca" class="bg-[#0b1b3d] hover:bg-blue-900 text-white font-medium px-5 py-2 rounded-xl transition shadow">Cerca</button>
+            </div>
+            <p id="search-status" class="text-sm mt-3 font-medium text-center hidden"></p>
+        </section>
+
+        <section id="tessera-section" class="hidden flex flex-col gap-4 animate-fade-in">
+            
+            <div id="tessera-card-export" class="bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-200 mx-auto w-full max-w-sm">
+                
+                <div class="bg-[#0b1b3d] p-6 text-white text-center flex flex-col items-center relative overflow-hidden">
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-900 rounded-full opacity-20"></div>
+                    <div class="mb-2 z-10">
+                        <img class="h-12 w-auto object-contain bg-white rounded-full p-0.5" src="https://media.aviationeagle.co.uk/Aviation-Eagle-Compact-TM-RBG.png" alt="Logo Compact">
+                    </div>
+                    <h2 class="font-black text-xl tracking-wide z-10">POINT&SKY</h2>
+                    <p class="text-blue-200 text-[10px] uppercase tracking-widest mt-0.5 z-10">Aviation Eagle Loyalty Club</p>
+                </div>
+
+                <div class="p-6 space-y-5">
+                    <div class="text-center">
+                        <div id="tessera-nome" class="text-2xl font-black text-[#0b1b3d] leading-tight">Nome Cognome</div>
+                        <div id="tessera-punti" class="text-slate-500 font-bold text-sm mt-1">Punti Aeros: 0</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 items-center text-sm border-t border-b border-slate-100 py-3">
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase tracking-wider font-semibold">Grado Club</span>
+                            <span id="tessera-grado" class="font-black text-slate-700 text-base">Bronze</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-slate-400 block text-[10px] uppercase tracking-wider font-semibold">N° Tessera</span>
+                            <span id="tessera-codice" class="font-mono font-bold text-blue-700 text-base">000000</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center py-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <canvas id="tessera-barcode"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 p-3 text-center border-t border-slate-200">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tessera strettamente personale e non cedibile</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-3">
+                <div class="flex items-center gap-3">
+                    <label class="text-sm font-bold text-slate-600">Formato Codice:</label>
+                    <select id="barcode-type" class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-[#0b1b3d] font-medium cursor-pointer">
+                        <option value="azteccode">Codice Aztec</option>
+                        <option value="pdf417">Codice PDF417</option>
+                    </select>
+                </div>
+                <button id="btn-download" class="w-full bg-[#0b1b3d] hover:bg-blue-900 text-white font-bold py-3 rounded-xl transition shadow-lg flex justify-center items-center gap-2">
+                    <span>💾</span> Scarica Tessera (PNG)
+                </button>
+            </div>
+
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Configurazione Firebase aggiornata sul tuo progetto "giuseppe-rtdb"
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB858lvuIi93dYBUmviH87jrb8dHZxm1s",
+            authDomain: "giuseppe-rtdb.firebaseapp.com",
+            databaseURL: "https://giuseppe-rtdb-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "giuseppe-rtdb",
+            storageBucket: "giuseppe-rtdb.firebasestorage.app",
+            messagingSenderId: "409034640682",
+            appId: "1:409034640682:web:b183a9b69b4b51e5e8e253"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const FIRESTORE_COLLECTION = "membri_pointandsky";
+
+        // Riferimenti DOM
+        const inputCodice = document.getElementById('input-codice');
+        const btnCerca = document.getElementById('btn-cerca');
+        const searchStatus = document.getElementById('search-status');
+        
+        const tesseraSection = document.getElementById('tessera-section');
+        const tesseraNome = document.getElementById('tessera-nome');
+        const tesseraPunti = document.getElementById('tessera-punti');
+        const tesseraGrado = document.getElementById('tessera-grado');
+        const tesseraCodice = document.getElementById('tessera-codice');
+        
+        const barcodeType = document.getElementById('barcode-type');
+        const btnDownload = document.getElementById('btn-download');
+
+        let currentCode = null;
+
+        function showStatus(message, isError = false) {
+            searchStatus.textContent = message;
+            searchStatus.classList.remove('hidden', 'text-slate-500', 'text-red-600', 'text-emerald-600');
+            searchStatus.classList.add(isError ? 'text-red-600' : 'text-emerald-600');
+        }
+
+        // Generazione Dinamica del codice a barre (Aztec o PDF417) basata sul numero tessera
+        function generaBarcode() {
+            if (!currentCode) return;
+            try {
+                bwipjs.toCanvas('tessera-barcode', {
+                    bcid: barcodeType.value, // 'azteccode' o 'pdf417'
+                    text: currentCode,       // Valore impostato sul numero della tessera
+                    scale: barcodeType.value === 'azteccode' ? 4 : 3, 
+                    height: barcodeType.value === 'pdf417' ? 10 : 12,
+                    includetext: false,
+                    backgroundcolor: 'f8fafc' 
+                });
+            } catch (e) {
+                console.error("Errore generazione barcode:", e);
+                showStatus("Errore nel rendering del codice a barre.", true);
+            }
+        }
+
+        // Ricerca Membro sul database Point&Sky
+        btnCerca.addEventListener('click', async () => {
+            const codice = inputCodice.value.trim();
+            tesseraSection.classList.add('hidden');
+            
+            if (!codice) {
+                showStatus("Inserisci un numero tessera valido.", true);
+                return;
+            }
+
+            searchStatus.textContent = "Ricerca della tessera nel database...";
+            searchStatus.classList.remove('hidden');
+            searchStatus.className = "text-sm mt-3 font-medium text-center text-slate-500";
+
+            try {
+                const docRef = doc(db, FIRESTORE_COLLECTION, codice);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentCode = codice;
+                    
+                    // Unione dei campi Nome e Cognome e visualizzazione dati
+                    const nomeCompleto = `${data.nome || ""} ${data.cognome || ""}`.trim();
+                    tesseraNome.textContent = nomeCompleto || "Membro Esclusivo";
+                    tesseraPunti.textContent = `Punti Aeros: ${(data.punti || 0).toLocaleString('it-IT')}`;
+                    tesseraGrado.textContent = data.grado || "Bronze";
+                    tesseraCodice.textContent = codice;
+
+                    showStatus("Tessera trovata con successo!", false);
+                    tesseraSection.classList.remove('hidden');
+                    generaBarcode();
+
+                } else {
+                    showStatus("Nessuna tessera associata a questo numero.", true);
+                }
+            } catch (error) {
+                console.error(error);
+                showStatus("Errore di connessione al database.", true);
+            }
+        });
+
+        // Rigenera il codice se l'utente cambia il formato della selezione
+        barcodeType.addEventListener('change', generaBarcode);
+
+        // Funzione di esportazione della tessera in formato PNG ad alta definizione
+        btnDownload.addEventListener('click', () => {
+            const element = document.getElementById('tessera-card-export');
+            
+            html2canvas(element, { 
+                scale: 4, // Alta fedeltà di rendering per la stampa o la scansione del telefono
+                useCORS: true,
+                backgroundColor: "#ffffff"
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Tessera_PointAndSky_${currentCode}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        });
+
+        // Consenti la ricerca premendo il tasto INVIO
+        inputCodice.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                btnCerca.click();
+            }
+        });
+    </script>
+</body>
+</html>
