@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Eagle - Generatore Contratti</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+        /* Effetto Glass Morphing - Premium Minimalist */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            border-radius: 1rem;
+        }
+        .tab-btn { transition: all 0.3s ease; }
+        .tab-active { border-bottom: 2px solid #0f172a; color: #0f172a; font-weight: 600; }
+        .tab-inactive { color: #64748b; border-bottom: 2px solid transparent; }
+        
+        /* Area di stampa nascosta a schermo ma usata per il PDF */
+        #print-container {
+            display: none;
+        }
+        .pdf-page {
+            background: #ffffff;
+            color: #000000;
+            padding: 40px;
+            font-size: 11pt;
+            line-height: 1.6;
+        }
+        .pdf-logos img { max-height: 60px; margin-right: 15px; }
+        .signature-box { margin-top: 50px; display: flex; justify-content: space-between; }
+        .signature-line { border-top: 1px solid #000; width: 250px; margin-top: 40px; padding-top: 5px; text-align: center; font-size: 9pt;}
+    </style>
+</head>
+<body class="p-6">
+
+    <div class="max-w-5xl mx-auto glass-panel p-8">
+        <h1 class="text-2xl font-bold text-slate-800 mb-6 tracking-tight">Pannello Operativo Contratti</h1>
+        
+        <div class="flex space-x-6 mb-8 border-b border-slate-200">
+            <button id="tab-genera" class="tab-btn tab-active pb-2" onclick="switchTab('genera')">Genera Contratto</button>
+            <button id="tab-aggiungi" class="tab-btn tab-inactive pb-2" onclick="switchTab('aggiungi')">Aggiungi Azienda</button>
+        </div>
+
+        <div id="section-genera" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Seleziona Azienda</label>
+                    <select id="select-azienda" class="w-full p-2 border border-slate-300 rounded bg-white/50 focus:outline-none focus:ring-2 focus:ring-slate-400">
+                        <option value="">Inizializzazione flotta dati...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nome Rappresentante Aziendale</label>
+                    <input type="text" id="rep-azienda" placeholder="Es. Mario Rossi" class="w-full p-2 border border-slate-300 rounded bg-white/50">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nome Cliente (Firma Manuale)</label>
+                    <input type="text" id="nome-cliente" placeholder="Es. Luigi Verdi" class="w-full p-2 border border-slate-300 rounded bg-white/50">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Variabile: Nome Account</label>
+                    <input type="text" id="nome-account" placeholder="Nome dell'account" class="w-full p-2 border border-slate-300 rounded bg-white/50">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Variabile: Email Account</label>
+                    <input type="email" id="email-account" placeholder="email@dominio.com" class="w-full p-2 border border-slate-300 rounded bg-white/50">
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button onclick="generaPDF()" class="bg-slate-800 text-white px-6 py-2 rounded shadow hover:bg-slate-700 transition">Genera e Scarica PDF</button>
+            </div>
+        </div>
+
+        <div id="section-aggiungi" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nome Azienda</label>
+                    <input type="text" id="new-nome" class="w-full p-2 border border-slate-300 rounded bg-white/50">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Partita IVA / Dati Fiscali</label>
+                    <input type="text" id="new-piva" class="w-full p-2 border border-slate-300 rounded bg-white/50">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Indirizzo Sede Legale</label>
+                <input type="text" id="new-indirizzo" class="w-full p-2 border border-slate-300 rounded bg-white/50">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Clausole Aggiuntive (verranno appese al contratto base)</label>
+                <textarea id="new-clausole" rows="4" class="w-full p-2 border border-slate-300 rounded bg-white/50" placeholder="Inserisci qui eventuali clausole specifiche per questa azienda..."></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Loghi Azienda (Massimo 3 - File Immagine)</label>
+                <input type="file" id="new-logos" accept="image/*" multiple class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100">
+                <p class="text-xs text-slate-500 mt-1">Seleziona fino a 3 file. Verranno salvati direttamente nel database.</p>
+            </div>
+
+            <div class="pt-4">
+                <button onclick="salvaAzienda()" class="bg-slate-800 text-white px-6 py-2 rounded shadow hover:bg-slate-700 transition">Salva Azienda in Firebase</button>
+                <span id="save-status" class="ml-4 text-sm font-medium"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-container">
+        <div id="contract-content" class="pdf-page">
+            <div id="pdf-header-logos" class="pdf-logos flex mb-6 border-b pb-4"></div>
+            
+            <h2 class="text-xl font-bold text-center mb-6">CONTRATTO DI EROGAZIONE SERVIZI</h2>
+            
+            <p class="mb-4 text-justify">
+                Tra la società <strong id="pdf-nome-azienda"></strong>, con sede in <span id="pdf-indirizzo-azienda"></span>, 
+                P.IVA/C.F. <span id="pdf-piva-azienda"></span>, di seguito denominata "Azienda",
+            </p>
+            <p class="mb-6 text-justify">
+                E il cliente <strong id="pdf-nome-cliente"></strong>, di seguito denominato "Cliente".
+            </p>
+            
+            <h3 class="font-bold mb-2">1. Oggetto del Contratto e Configurazione Account</h3>
+            <p class="mb-4 text-justify">
+                Con il presente accordo, le parti definiscono i termini di utilizzo e la gestione del profilo associato. 
+                Il Cliente richiede l'attivazione e l'impiego dell'account denominato <strong id="pdf-var-account"></strong>, 
+                identificato univocamente dall'indirizzo email <strong id="pdf-var-email"></strong>. 
+                Tutte le comunicazioni tecniche e operative faranno riferimento a tale configurazione.
+            </p>
+            
+            <h3 class="font-bold mb-2">2. Clausole Base e Regolamento dei Servizi</h3>
+            <p class="mb-4 text-justify">
+                L'account assegnato sarà configurato esclusivamente come <strong>alias di posta elettronica</strong> collegato alla casella email personale o di riferimento del dipendente (es. @gmail.com o altri provider), all'interno della quale l'impiegato visualizzerà centralmente sia la corrispondenza privata che quella aziendale.
+            </p>
+            <p class="mb-4 text-justify">
+                Il Cliente e l'impiegato si impegnano formalmente a garantire e non ostruire l'accesso al sistema da parte del nostro team tecnico per le operazioni di inserimento, manutenzione, nonché per l'eventuale futura rimozione dell'alias stesso.
+            </p>
+            <p class="mb-4 text-justify">
+                Resta inteso che l'account non dispone di una casella Gmail indipendente. Tramite tale profilo, l'utente potrà usufruire di tutti i servizi dell'ecosistema Google che <strong>non richiedono l'utilizzo di Google Drive o la creazione autonoma di documenti</strong>, a meno che questi ultimi non siano stati preventivamente creati e condivisi da un altro account esterno autorizzato. È consentita la modifica dell'immagine del profilo, mentre l'accesso alla piattaforma YouTube non è garantito e potrebbe non essere configurato o abilitato.
+            </p>
+
+            <h3 class="font-bold mb-2">3. Clausole Specifiche Aziendali</h3>
+            <p id="pdf-clausole-extra" class="mb-8 text-justify whitespace-pre-line"></p>
+            
+            <div class="signature-box mt-16">
+                <div class="w-1/2 pr-4">
+                    <p class="mb-12">Per l'Azienda:</p>
+                    <p class="font-bold" id="pdf-firma-azienda"></p>
+                    <p class="text-xs mt-2 text-justify italic text-gray-600">
+                        *Firma autografa sostituita a mezzo stampa e/o firma elettronica ai sensi dell'art. 24 del D.Lgs. 82/2005 (CAD).*
+                    </p>
+                </div>
+                
+                <div class="w-1/2 pl-4 flex flex-col items-end">
+                    <p class="mb-12 w-full text-right">Per il Cliente:</p>
+                    <div class="signature-line">
+                        <span id="pdf-firma-cliente-nome" class="block font-bold mb-1"></span>
+                        (Firma Manuale)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDeLjoDGAlTXaRalBk-FzG-rzoMJ6snGD8",
+            authDomain: "aziende-89000.firebaseapp.com",
+            projectId: "aziende-89000",
+            storageBucket: "aziende-89000.firebasestorage.app",
+            messagingSenderId: "284701453488",
+            appId: "1:284701453488:web:f49d4aff9ea9cee2929f75",
+            measurementId: "G-QNYW2GMGJB"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        let aziendeList = [];
+
+        // Cambia Tab (Genera <-> Aggiungi)
+        window.switchTab = function(tab) {
+            document.getElementById('section-genera').classList.toggle('hidden', tab !== 'genera');
+            document.getElementById('section-aggiungi').classList.toggle('hidden', tab !== 'aggiungi');
+            
+            document.getElementById('tab-genera').className = tab === 'genera' ? 'tab-btn tab-active pb-2' : 'tab-btn tab-inactive pb-2';
+            document.getElementById('tab-aggiungi').className = tab === 'aggiungi' ? 'tab-btn tab-active pb-2' : 'tab-btn tab-inactive pb-2';
+        };
+
+        // Carica aziende da Firestore (Eseguita subito all'avvio del modulo)
+        async function loadAziende() {
+            const select = document.getElementById('select-azienda');
+            try {
+                const querySnapshot = await getDocs(collection(db, "aziende"));
+                aziendeList = [];
+                select.innerHTML = '<option value="">Seleziona un\'azienda...</option>';
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    aziendeList.push({ id: doc.id, ...data });
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = data.nome;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Errore caricamento aziende: ", error);
+                select.innerHTML = '<option value="">Errore di connessione a Firebase (Verifica Regole)</option>';
+            }
+        }
+
+        // Funzione per convertire file immagine in Base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Salva nuova azienda
+        window.salvaAzienda = async function() {
+            const status = document.getElementById('save-status');
+            status.textContent = "Salvataggio nei server...";
+            status.className = "ml-4 text-sm font-medium text-blue-600";
+
+            const nome = document.getElementById('new-nome').value;
+            const piva = document.getElementById('new-piva').value;
+            const indirizzo = document.getElementById('new-indirizzo').value;
+            const clausole = document.getElementById('new-clausole').value;
+            const fileInput = document.getElementById('new-logos');
+            
+            if(!nome || !piva) {
+                status.textContent = "Nome e P.IVA obbligatori.";
+                status.className = "ml-4 text-sm font-medium text-red-600";
+                return;
+            }
+
+            let logosBase64 = [];
+            if (fileInput.files.length > 0) {
+                const files = Array.from(fileInput.files).slice(0, 3); // Max 3 loghi
+                for (let file of files) {
+                    const base64 = await fileToBase64(file);
+                    logosBase64.push(base64);
+                }
+            }
+
+            try {
+                await addDoc(collection(db, "aziende"), {
+                    nome: nome,
+                    piva: piva,
+                    indirizzo: indirizzo,
+                    clausole: clausole,
+                    logos: logosBase64
+                });
+                status.textContent = "Azienda memorizzata con successo!";
+                status.className = "ml-4 text-sm font-medium text-green-600";
+                
+                // Reset dei campi di input
+                document.getElementById('new-nome').value = '';
+                document.getElementById('new-piva').value = '';
+                document.getElementById('new-indirizzo').value = '';
+                document.getElementById('new-clausole').value = '';
+                fileInput.value = '';
+
+                // Sincronizzazione immediata della selezione
+                loadAziende();
+                setTimeout(() => { status.textContent = ""; }, 3000);
+            } catch (error) {
+                console.error("Errore salvataggio: ", error);
+                status.textContent = "Errore di scrittura nel database.";
+                status.className = "ml-4 text-sm font-medium text-red-600";
+            }
+        };
+
+        // Generazione del file PDF pronto per la stampa
+        window.generaPDF = function() {
+            const aziendaId = document.getElementById('select-azienda').value;
+            if (!aziendaId) { alert("Seleziona un'azienda dalla lista prima di procedere."); return; }
+            
+            const azienda = aziendeList.find(a => a.id === aziendaId);
+            const repAzienda = document.getElementById('rep-azienda').value;
+            const nomeCliente = document.getElementById('nome-cliente').value;
+            const nomeAccount = document.getElementById('nome-account').value;
+            const emailAccount = document.getElementById('email-account').value;
+
+            // Mapping dati sul documento di stampa
+            document.getElementById('pdf-nome-azienda').textContent = azienda.nome;
+            document.getElementById('pdf-indirizzo-azienda').textContent = azienda.indirizzo || "N/D";
+            document.getElementById('pdf-piva-azienda').textContent = azienda.piva;
+            document.getElementById('pdf-nome-cliente').textContent = nomeCliente || "__________________";
+            
+            document.getElementById('pdf-var-account').textContent = nomeAccount || "[Nome Account]";
+            document.getElementById('pdf-var-email').textContent = emailAccount || "[Email Account]";
+            document.getElementById('pdf-clausole-extra').textContent = azienda.clausole || "Nessuna clausola aggiuntiva specifica.";
+
+            document.getElementById('pdf-firma-azienda').textContent = repAzienda || "__________________";
+            document.getElementById('pdf-firma-cliente-nome').textContent = nomeCliente || "";
+
+            // Iniezione Loghi nell'intestazione del PDF
+            const logosContainer = document.getElementById('pdf-header-logos');
+            logosContainer.innerHTML = '';
+            if (azienda.logos && azienda.logos.length > 0) {
+                azienda.logos.forEach(src => {
+                    const img = document.createElement('img');
+                    img.src = src;
+                    logosContainer.appendChild(img);
+                });
+            }
+
+            // Innesco motore di rendering html2pdf
+            const element = document.getElementById('contract-content');
+            const printContainer = document.getElementById('print-container');
+            printContainer.style.display = 'block'; // Visibile temporaneamente nel DOM
+
+            const opt = {
+                margin:       15,
+                filename:     `Contratto_${azienda.nome.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                printContainer.style.display = 'none'; // Schermatura riattivata
+            });
+        };
+
+        // INIZIALIZZAZIONE DIRETTA (Risolve il bug del mancato caricamento iniziale)
+        loadAziende();
+    </script>
+</body>
+</html>
