@@ -20,7 +20,30 @@
             font-family: 'Inter', 'Segoe UI', sans-serif; overflow: hidden;
         }
 
-        #scannerGhost { position: absolute; opacity: 0; pointer-events: none; top: -100px; }
+        /* MODIFICA: Stile aggiornato per rendere visibile il campo di input manuale */
+        #scannerGhost { 
+            background: rgba(26, 115, 232, 0.1); 
+            border: 1px solid var(--accent); 
+            color: white; 
+            padding: 12px 25px; 
+            border-radius: 8px; 
+            margin-top: 30px; 
+            text-align: center; 
+            font-family: monospace; 
+            font-size: 1.2rem; 
+            outline: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+        #scannerGhost::placeholder {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+        #scannerGhost:focus {
+            box-shadow: 0 0 15px rgba(26, 115, 232, 0.4);
+            background: rgba(26, 115, 232, 0.2);
+        }
 
         .step {
             display: none; height: 100vh; width: 100vw;
@@ -83,15 +106,13 @@
 </head>
 <body>
 
-    <input type="text" id="scannerGhost" autocomplete="off">
-
-    <!-- STEP 1: ATTESA -->
     <div id="step1" class="step active">
-        <div class="radar"><span style="letter-spacing: 3px; font-size: 0.6rem; color: var(--accent);">WAITING SCAN</span></div>
+        <div class="radar"><span style="letter-spacing: 3px; font-size: 0.6rem; color: var(--accent);">WAITING DATA</span></div>
         <p style="margin-top: 20px; color: var(--text-dim);">TERMINALE PRONTO PER COLONNA F</p>
+        
+        <input type="text" id="scannerGhost" autocomplete="off" placeholder="INSERISCI ID + INVIO">
     </div>
 
-    <!-- STEP 2: DATI -->
     <div id="step2" class="step">
         <div class="profile-container">
             <div class="info-block">
@@ -109,7 +130,6 @@
         </div>
     </div>
 
-    <!-- STEP 3: SERVIZI -->
     <div id="step3" class="step">
         <div id="selectionGrid" style="display: contents;">
             <h2 style="margin-bottom: 30px; letter-spacing: 2px;">REPORT HUB</h2>
