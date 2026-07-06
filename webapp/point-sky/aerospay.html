@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AerosPay Control Deck - Glassmorphism Edition</title>
+    <title>AerosPay Control Deck - Ultra Readability Edition</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
@@ -20,7 +20,7 @@
             --input-bg: rgba(255, 255, 255, 0.05);
             --btn-main-bg: #f5f5f7;
             --btn-main-text: #0b0d17;
-            --preview-bg: #0b0d17;
+            --preview-bg: #ffffff;
             --heading-gradient: linear-gradient(180deg, #ffffff 0%, #a1a1a6 100%);
         }
         
@@ -36,7 +36,7 @@
             --input-bg: rgba(0, 0, 0, 0.05);
             --btn-main-bg: #1d1d1f;
             --btn-main-text: #ffffff;
-            --preview-bg: #f5f5f7;
+            --preview-bg: #ffffff;
             --heading-gradient: linear-gradient(180deg, #1d1d1f 0%, #6e6e73 100%);
         }
         
@@ -67,7 +67,6 @@
             position: relative;
         }
         
-        /* PULSANTE COMMUTATORE LUCI CABINA */
         .theme-switch-wrapper {
             display: flex;
             justify-content: flex-end;
@@ -156,11 +155,11 @@
         
         #preview-container {
             border: 1px solid var(--glass-border);
-            padding: 10px;
+            padding: 0;
             background: var(--preview-bg);
             border-radius: 14px;
             margin-top: 25px;
-            max-height: 500px;
+            max-height: 550px;
             overflow-y: auto;
             transition: background 0.4s ease;
         }
@@ -225,21 +224,19 @@
     </div>
 
     <div id="step3" class="step">
-        <h2>Fase 3: Control Deck Ricevuta Glassmorphic</h2>
-        <p style="color: var(--text-dim); font-size: 14px;">L'email simula l'effetto vetro satinato grazie a sovrapposizioni cromatiche calibrate per i client desktop e mobile.</p>
+        <h2>Fase 3: Control Deck Ricevuta Email</h2>
+        <p style="color: var(--text-dim); font-size: 14px;">L'output sottostante genera un codice HTML pulito, stabile e con sfondo bianco fisso per l'utente finale.</p>
         
-        <div id="preview-container">
-            </div>
+        <div id="preview-container"></div>
 
         <div class="flex-buttons">
             <button class="btn-secondary" onclick="vaiAlStep(2)">&larr; Ripeti Scansione</button>
-            <button onclick="copiaCodiceHTML()" style="background: #34c759; color: white;">Copia HTML (Solo blocco DIV)</button>
+            <button onclick="copiaCodiceHTML()" style="background: #34c759; color: white;">Copia HTML Intero (Pronto per l'invio)</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Configurazione Firebase puntata alle tue chiavi di accesso
     const firebaseConfig = {
         apiKey: "AIzaSyDB858lvuIi93dYBUmviH87jrb8dHZxm1s",
         authDomain: "giuseppe-rtdb.firebaseapp.com",
@@ -250,7 +247,6 @@
         appId: "1:409034640682:web:b183a9b69b4b51e5e8e253"
     };
 
-    // Inizializzazione SDK Cloud Firestore
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -259,10 +255,9 @@
         numeroTessera: "N/D",
         saldoPunti: 0,
         tier: "Standard",
-        coloreTier: "#8e8e93"
+        coloreTier: "#6e6e73"
     };
 
-    // LOGICA DI CONTROLLO DELLE LUCI DI COCKPIT (THEME SWITCH)
     function commutaLuciCabina() {
         const root = document.documentElement;
         const btn = document.getElementById('theme-btn');
@@ -277,7 +272,6 @@
         }
     }
 
-    // Inizializzazione tema salvato in memoria
     if (localStorage.getItem('deck-theme') === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
         document.getElementById('theme-btn').innerText = "☀️ Tema Chiaro";
@@ -289,14 +283,12 @@
         if(stepNum === 3) generaAnteprimaEmail();
     }
 
-    // Intercettazione del ritorno a capo dello scanner
     document.getElementById('codiceFedelta').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             cercaUtenteFirestore();
         }
     });
 
-    // Logica di interrogazione e mappatura chiavi Firestore reali
     function cercaUtenteFirestore() {
         const codice = document.getElementById('codiceFedelta').value.trim();
         const statusDiv = document.getElementById('db-status');
@@ -310,28 +302,23 @@
 
         statusDiv.style.display = "block";
         statusDiv.style.color = "#ff9f0a";
-        statusDiv.innerText = "Allineamento orbita dati... Interrogazione collezione 'membri_pointandsky'...";
+        statusDiv.innerText = "Allineamento dati... Interrogazione collezione 'membri_pointandsky'...";
 
-        // Lettura del documento basato sul codice letto
         db.collection('membri_pointandsky').doc(codice).get().then((doc) => {
             if (doc.exists) {
                 const data = doc.data();
-                let colore = "#8e8e93"; 
-                
-                // Mappatura esatta basata sulla proprietà 'grado' inviata dal database
+                let colore = "#6e6e73"; 
                 const tier = data.grado ? data.grado.toUpperCase() : "STANDARD";
                 
-                // Mappatura cromatica dinamica dei Tier Point&Sky
-                if(tier.includes("GOLD") || tier.includes("ORO")) colore = "#ffd60a";
-                else if(tier.includes("SILVER") || tier.includes("ARGENTO")) colore = "#aeaeb2";
-                else if(tier.includes("PLATINUM") || tier.includes("PLATINO")) colore = "#bf5af2";
-                else if(tier.includes("VIP") || tier.includes("DIAMOND")) colore = "#30d158"; // Verde brillante per Diamond
+                if(tier.includes("GOLD") || tier.includes("ORO")) colore = "#b8860b"; // Oro leggibile su bianco
+                else if(tier.includes("SILVER") || tier.includes("ARGENTO")) colore = "#4a4a4a";
+                else if(tier.includes("PLATINUM") || tier.includes("PLATINO")) colore = "#8b008b";
+                else if(tier.includes("VIP") || tier.includes("DIAMOND")) colore = "#008000";
 
-                // Salvataggio dei dati estratti (nome, punti, grado) nel modello di stato locale
                 utenteSelezionato = {
                     nome: data.nome || "Membro del Network",
                     numeroTessera: codice,
-                    saldoPunti: parseInt(data.punti || 0), // Associazione alla chiave 'punti' del DB
+                    saldoPunti: parseInt(data.punti || 0),
                     tier: tier,
                     coloreTier: colore
                 };
@@ -340,7 +327,6 @@
                 statusDiv.innerText = `Raccordo stabilito! Utente: ${utenteSelezionato.nome} | Livello: ${tier}`;
                 setTimeout(() => { vaiAlStep(3); }, 1000);
             } else {
-                // Fallback locale di simulazione se l'ID non esiste
                 statusDiv.style.color = "#ff9f0a";
                 statusDiv.innerText = "ID non presente nel DB. Caricamento profilo di test...";
                 
@@ -349,7 +335,7 @@
                     numeroTessera: codice,
                     saldoPunti: 1205067,
                     tier: "DIAMOND",
-                    coloreTier: "#30d158"
+                    coloreTier: "#008000"
                 };
                 setTimeout(() => { vaiAlStep(3); }, 1200);
             }
@@ -360,79 +346,86 @@
         });
     }
 
-    // Costruzione della mail gigante con architettura Faux-Glassmorphic per client e-mail
+    /* INIEZIONE HTML PROFESSIONALE - SFONDO BIANCO GARANTITO SU TUTTI I DISPOSITIVI */
     function generaCodiceEmail() {
         const numOrdine = document.getElementById('numOrdine').value || "N/D";
         const causa = document.getElementById('causa').value || "Conguaglio Operativo";
         const soldiMancanti = parseFloat(document.getElementById('soldiMancanti').value || 0).toFixed(2);
         const puntiDetratti = parseInt(document.getElementById('puntiDetratti').value || 0);
-        
-        // Calcolo aritmetico istantaneo del saldo aggiornato
         const nuovoSaldo = utenteSelezionato.saldoPunti - puntiDetratti;
 
-        return `<div id="aerospay-glass-email" style="width:100%; max-width:650px; margin:0 auto; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:radial-gradient(circle at 50% 0%, #1a2138 0%, #090a0f 100%); background-color:#090a0f; padding:30px; box-sizing:border-box; border-radius:24px;">
-    
-    <table width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:30px;">
+        return `<div style="background-color:#ffffff; padding:30px 15px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; min-height:100%; color:#1d1d1f;">
+    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#ffffff; border-radius:16px; border:1px solid #e5e5ea; border-collapse:separate; padding:32px; box-sizing:border-box; shadow:0 4px 12px rgba(0,0,0,0.05);">
         <tr>
-            <td style="font-size:20px; font-weight:900; color:#ffffff; letter-spacing:-0.5px; text-transform:uppercase;">
-                AVIATION EAGLE
-            </td>
-            <td align="right" style="font-size:11px; font-weight:700; color:#aeaeb2; text-transform:uppercase; letter-spacing:1.5px;">
-                Transazione AerosPay
+            <td>
+                <table width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:25px; border-bottom:2px solid #0b1b3d; padding-bottom:15px;">
+                    <tr>
+                        <td style="font-size:22px; font-weight:900; color:#0b1b3d; letter-spacing:0.5px; text-transform:uppercase;">
+                            AVIATION EAGLE
+                        </td>
+                        <td align="right" style="font-size:12px; font-weight:700; color:#6e6e73; text-transform:uppercase; letter-spacing:1px;">
+                            Ricevuta AerosPay
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size:15px; line-height:1.6; color:#1d1d1f; margin-top:0; margin-bottom:24px; font-weight:400;">
+                    Gentile <strong style="color:#0b1b3d;">${utenteSelezionato.nome}</strong>,<br><br>
+                    In conformità alle linee guida e allo statuto del nostro <strong>No-Profit Group</strong>, ti confermiamo l'avvenuta compensazione degli oneri residui tramite l'elaborazione dei tuoi punti fedeltà commerciali. Ti ricordiamo che il circuito esclude tassativamente l'uso o la richiesta di valuta reale.
+                </p>
+
+                <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#fff5f5; border:1px solid #ffccd0; border-radius:12px; margin-bottom:20px;">
+                    <tr>
+                        <td style="padding:20px;">
+                            <span style="font-size:11px; font-weight:800; color:#cc0000; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:4px;">Valore Economico Regolato</span>
+                            <span style="font-size:38px; font-weight:800; color:#cc0000; letter-spacing:-1px; display:block; line-height:1;">€ ${soldiMancanti}</span>
+                            <span style="font-size:13px; color:#444444; display:block; margin-top:12px; line-height:1.5;">
+                                <strong>Causale del conguaglio:</strong> ${causa}<br>
+                                <strong>Riferimento Pratica Ordine:</strong> #${numOrdine}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+
+                <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f0f5ff; border:1px solid #adc6ff; border-radius:12px; margin-bottom:20px;">
+                    <tr>
+                        <td style="padding:20px;">
+                            <span style="font-size:11px; font-weight:800; color:#0050b3; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:4px;">Contabilizzazione Punti Loyalty</span>
+                            <span style="font-size:32px; font-weight:800; color:#0050b3; letter-spacing:-0.5px; display:block; line-height:1;">-${puntiDetratti} AEROS</span>
+                            <span style="font-size:13px; color:#444444; display:block; margin-top:8px; line-height:1.4;">
+                                Transazione completata interamente in modalità <strong>Money Free</strong>. Nessun prelievo o movimentazione su conti correnti o carte bancarie.
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+
+                <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f8fafc; border:1px solid #e2e8f0; border-top: 4px solid ${utenteSelezionato.coloreTier}; border-radius:12px; margin-bottom:25px; padding:18px; box-sizing:border-box;">
+                    <tr>
+                        <td style="font-size:14px; font-weight:700; color:#0b1b3d; padding-bottom:10px;">Programma Fedeltà:</td>
+                        <td align="right" style="font-size:13px; font-weight:800; color:${utenteSelezionato.coloreTier}; padding-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                            Point&Sky [${utenteSelezionato.tier}]
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px; color:#555555; padding-top:6px; border-top:1px solid #e2e8f0;">N° Tessera Membro:</td>
+                        <td align="right" style="font-size:13px; font-weight:600; color:#1d1d1f; padding-top:6px; border-top:1px solid #e2e8f0;">${utenteSelezionato.numeroTessera}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px; color:#555555; padding-top:6px;">Bilancio Precedente:</td>
+                        <td align="right" style="font-size:13px; color:#1d1d1f; padding-top:6px;">${utenteSelezionato.saldoPunti.toLocaleString('it-IT')} Aeros</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px; font-weight:700; color:#1d1d1f; padding-top:12px; border-top:1px solid #e2e8f0; margin-top:8px;">Nuovo Saldo Disponibile:</td>
+                        <td align="right" style="font-size:15px; font-weight:800; color:#008000; padding-top:12px; border-top:1px solid #e2e8f0; margin-top:8px;">${nuovoSaldo.toLocaleString('it-IT')} AEROS</td>
+                    </tr>
+                </table>
+
+                <p style="font-size:11px; line-height:1.6; color:#8e8e93; text-align:justify; margin:0; border-top:1px solid #e5e5ea; padding-top:15px; font-weight:400;">
+                    <em>Aviation Eagle è un No-Profit Group e non rappresenta in alcun modo un'agenzia di viaggi o un tour operator organizzato. Il servizio di indicizzazione e ricerca delle tratte aeree viene fornito a titolo amatoriale e interamente gratuito. Qualsiasi transazione finalizzata all'emissione dei titoli di viaggio veri e propri avviene esclusivamente ed unicamente sulle piattaforme ufficiali e sicure dei vettori terzi o dei rispettivi partner di flotta. Le donazioni spontanee dei passeggeri sono da intendersi come contributi liberali destinati unicamente alla copertura dei costi dei server, del tutto disgiunte da logiche di profitto o tariffazione commerciale.</em>
+                </p>
             </td>
         </tr>
     </table>
-
-    <p style="font-size:15px; line-height:1.6; color:#e5e5ea; margin-bottom:25px; font-weight:300;">
-        Gentile <strong>${utenteSelezionato.nome}</strong>,<br>
-        In conformità alle direttive economiche del nostro <strong>No-Profit Group</strong>, abbiamo processato lo storno dei punti per oneri residui tramite la tua firma digitale. Il nostro ecosistema esclude l'uso di denaro reale in qualsiasi transazione.
-    </p>
-
-    <div style="background-color: rgba(255, 69, 58, 0.08); border: 1px solid rgba(255, 69, 58, 0.25); padding:30px; border-radius:16px; margin-bottom:20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-        <span style="font-size:11px; font-weight:800; color:#ff453a; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px;">Importo Monetario Compensato</span>
-        <span style="font-size:46px; font-weight:800; color:#ff453a; letter-spacing:-1.5px; display:block; line-height:1;">€ ${soldiMancanti}</span>
-        <span style="font-size:13px; color:#aeaeb2; display:block; margin-top:12px; line-height:1.4;">
-            <strong>Causa conguaglio:</strong> ${causa}<br>
-            <strong>Identificativo File Ordine:</strong> #${numOrdine}
-        </span>
-    </div>
-
-    <div style="background-color: rgba(0, 113, 227, 0.08); border: 1px solid rgba(0, 113, 227, 0.25); padding:30px; border-radius:16px; margin-bottom:20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-        <span style="font-size:11px; font-weight:800; color:#0a84ff; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px;">Detrazione Punti Equivalente</span>
-        <span style="font-size:38px; font-weight:800; color:#0a84ff; letter-spacing:-1px; display:block; line-height:1;">-${puntiDetratti} AEROS</span>
-        <span style="font-size:13px; color:#aeaeb2; display:block; margin-top:8px; font-weight:300;">
-            Il pagamento è stato completato interamente in modalità <strong>Money Free</strong> tramite detrazione punti. Zero impatto bancario.
-        </span>
-    </div>
-
-    <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-top: 4px solid ${utenteSelezionato.coloreTier}; padding:22px; border-radius:16px; margin-bottom:30px;">
-        <table width="100%" cellspacing="0" cellpadding="0" border="0">
-            <tr>
-                <td style="font-size:14px; font-weight:700; color:#ffffff; padding-bottom:10px;">
-                    Programma Loyalty:
-                </td>
-                <td align="right" style="font-size:13px; font-weight:800; color:${utenteSelezionato.coloreTier}; padding-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">
-                    Point&Sky [${utenteSelezionato.tier}]
-                </td>
-            </tr>
-            <tr>
-                <td style="font-size:13px; color:#aeaeb2; padding-top:6px;">ID Tessera Utente:</td>
-                <td align="right" style="font-size:13px; font-weight:600; color:#ffffff; padding-top:6px;">${utenteSelezionato.numeroTessera}</td>
-            </tr>
-            <tr>
-                <td style="font-size:13px; color:#aeaeb2; padding-top:6px;">Saldo Pre-Transazione:</td>
-                <td align="right" style="font-size:13px; color:#ffffff; padding-top:6px;">${utenteSelezionato.saldoPunti.toLocaleString('it-IT')} Aeros</td>
-            </tr>
-            <tr>
-                <td style="font-size:13px; font-weight:700; color:#ffffff; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); margin-top:10px;">Nuovo Bilancio Disponibile:</td>
-                <td align="right" style="font-size:14px; font-weight:800; color:#30d158; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); margin-top:10px;">${nuovoSaldo.toLocaleString('it-IT')} AEROS</td>
-            </tr>
-        </table>
-    </div>
-
-    <p style="font-size:10.5px; line-height:1.6; color:#8e8e93; text-align:justify; margin:0; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px; font-weight:300;">
-        <em>Aviation Eagle è un No-Profit Group e non configura un'agenzia di viaggi organizzata. Il servizio di indicizzazione e ricerca voli viene fornito esclusivamente a titolo gratuito e amatoriale. Le transazioni relative all'emissione dei biglietti aerei avvengono unicamente ed esclusivamente sui canali ufficiali e sicuri delle compagnie o dei partner commerciali. Le donazioni fornite spontaneamente dall'utenza costituiscono contributi liberali ad esclusivo supporto del mantenimento dell'infrastruttura server, rimanendo sconnesse da qualsiasi acquisto o tariffazione commerciale.</em>
-    </p>
 </div>`;
     }
 
@@ -448,7 +441,7 @@
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
-        alert('Codice HTML in stile Glassmorphism copiato con successo negli appunti!');
+        alert('Codice HTML ad altissima leggibilità con sfondo bianco copiato!');
     }
 </script>
 
