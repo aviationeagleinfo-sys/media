@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galleria Documenti - Aviation Eagle</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            text-align: center;
+        }
+
+        header img {
+            max-height: 60px;
+            width: auto;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .card-info {
+            padding: 12px;
+            background-color: #fafafa;
+            border-top: 1px solid #eee;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+        }
+
+        footer {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            margin-top: 40px;
+        }
+
+        footer a {
+            color: #00a8ff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="https://media.aviationeagle.co.uk/Aviation-Eagle-Compact-TM-RBG.png" alt="Aviation Eagle Logo">
+    </header>
+
+    <main>
+        <div class="grid-container">
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7568.jpg" alt="Documento 1" loading="lazy">
+                <div class="card-info">Pagina 1</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7569.jpg" alt="Documento 2" loading="lazy">
+                <div class="card-info">Pagina 2</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7570.jpg" alt="Documento 3" loading="lazy">
+                <div class="card-info">Pagina 3</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7571.jpg" alt="Documento 4" loading="lazy">
+                <div class="card-info">Pagina 4</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7572.jpg" alt="Documento 5" loading="lazy">
+                <div class="card-info">Pagina 5</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7573.jpg" alt="Documento 6" loading="lazy">
+                <div class="card-info">Pagina 6</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7574.jpg" alt="Documento 7" loading="lazy">
+                <div class="card-info">Pagina 7</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7575.jpg" alt="Documento 8" loading="lazy">
+                <div class="card-info">Pagina 8</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7576.jpg" alt="Documento 9" loading="lazy">
+                <div class="card-info">Pagina 9</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7577.jpg" alt="Documento 10" loading="lazy">
+                <div class="card-info">Pagina 10</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7578.jpg" alt="Documento 11" loading="lazy">
+                <div class="card-info">Pagina 11</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7579.jpg" alt="Documento 12" loading="lazy">
+                <div class="card-info">Pagina 12</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7580.jpg" alt="Documento 13" loading="lazy">
+                <div class="card-info">Pagina 13</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7581.jpg" alt="Documento 14" loading="lazy">
+                <div class="card-info">Pagina 14</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7582.PNG" alt="Documento 15" loading="lazy">
+                <div class="card-info">Pagina 15</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7583.PNG" alt="Documento 16" loading="lazy">
+                <div class="card-info">Pagina 16</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7584.PNG" alt="Documento 17" loading="lazy">
+                <div class="card-info">Pagina 17</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7585.PNG" alt="Documento 18" loading="lazy">
+                <div class="card-info">Pagina 18</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7586.PNG" alt="Documento 19" loading="lazy">
+                <div class="card-info">Pagina 19</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7587.PNG" alt="Documento 20" loading="lazy">
+                <div class="card-info">Pagina 20</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7588.PNG" alt="Documento 21" loading="lazy">
+                <div class="card-info">Pagina 21</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7589.PNG" alt="Documento 22" loading="lazy">
+                <div class="card-info">Pagina 22</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7590.PNG" alt="Documento 23" loading="lazy">
+                <div class="card-info">Pagina 23</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7591.PNG" alt="Documento 24" loading="lazy">
+                <div class="card-info">Pagina 24</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7592.PNG" alt="Documento 25" loading="lazy">
+                <div class="card-info">Pagina 25</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7593.PNG" alt="Documento 26" loading="lazy">
+                <div class="card-info">Pagina 26</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7594.PNG" alt="Documento 27" loading="lazy">
+                <div class="card-info">Pagina 27</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7595.PNG" alt="Documento 28" loading="lazy">
+                <div class="card-info">Pagina 28</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7596.PNG" alt="Documento 29" loading="lazy">
+                <div class="card-info">Pagina 29</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7597.PNG" alt="Documento 30" loading="lazy">
+                <div class="card-info">Pagina 30</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7598.PNG" alt="Documento 31" loading="lazy">
+                <div class="card-info">Pagina 31</div>
+            </div>
+            <div class="card">
+                <img src="https://media.aviationeagle.co.uk/UK/IMG_7599.PNG" alt="Documento 32" loading="lazy">
+                <div class="card-info">Pagina 32</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Aviation Eagle 2026 | Visita il nostro sito: <a href="https://aviationeagle.co.uk" target="_blank">aviationeagle.co.uk</a></p>
+    </footer>
+
+</body>
+</html>
