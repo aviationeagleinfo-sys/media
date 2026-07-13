@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Verdict - Air France</title>
+    <style>
+        /* Import fonts from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&display=swap');
+
+        /* CSS Variables for easy color customization */
+        :root {
+            --color-primary: #002157;    /* Air France corporate blue for titles and accents */
+            --color-accent: #343a40;     /* Dark gray for secondary text */
+            --color-light-gray: #ffffff; /* White for main backgrounds */
+            --color-medium-gray: #f8f9fa;/* Very light gray for secondary backgrounds */
+            --color-text: #212529;       /* Dark gray for body text */
+            --border-radius: 12px;       /* Border radius for rounded corners */
+        }
+
+        /* Body styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-light-gray);
+            color: var(--color-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        /* Main card container */
+        .verdict-card {
+            width: 100%;
+            max-width: 650px;
+            background-color: var(--color-light-gray);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #dee2e6;
+        }
+
+        /* Header */
+        .verdict-header {
+            background-color: var(--color-light-gray); 
+            color: var(--color-primary); 
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .verdict-header h1 {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--color-primary);
+        }
+        
+        /* Logo */
+        .company-logo {
+            height: 35px;
+        }
+
+        /* Main section with background image */
+        .verdict-main {
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            min-height: 250px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 1.5rem; 
+        }
+        
+        .verdict-main::before {
+            content: none; 
+        }
+
+        /* Content wrapper for readability over the background image */
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(5px);
+            padding: 1.5rem;
+            border-radius: calc(var(--border-radius) - 4px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); 
+            max-width: 90%; 
+            width: 100%;
+        }
+        
+        .score-and-text {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        /* Score Circle */
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--color-primary); 
+            font-size: 3.5rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            flex-shrink: 0;
+            position: relative;
+            background-color: var(--color-light-gray); 
+            border: 1px solid var(--color-medium-gray); 
+        }
+        .score-circle-progress {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+        }
+        .score-circle-inner {
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background-color: var(--color-light-gray); 
+            border-radius: 50%;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .verdict-text {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .verdict-text p {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Pros and Cons Section */
+        .pros-cons {
+            display: flex;
+            background-color: var(--color-light-gray);
+            padding: 1.5rem;
+            gap: 1.5rem;
+            border-top: 1px solid var(--color-medium-gray);
+        }
+
+        .pros, .cons {
+            flex: 1;
+            padding: 1rem;
+            border-radius: calc(var(--border-radius) - 4px);
+            border: 1px solid var(--color-medium-gray); 
+        }
+        
+        .pros-cons .title {
+            display: block;
+            margin-bottom: 1rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            color: var(--color-primary); 
+        }
+        
+        .pros .title::before { content: '+'; margin-right: 0.5rem; color: var(--color-primary); }
+        .cons .title::before { content: '−'; margin-right: 0.5rem; color: #bc0000; } /* Dark red for cons */
+
+        .pros-cons ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        
+        /* Detailed Ratings Section */
+        .ratings {
+            padding: 1.5rem;
+            background-color: var(--color-light-gray);
+            border-top: 1px solid var(--color-medium-gray);
+        }
+
+        .rating-item:not(:last-child) {
+            margin-bottom: 1.25rem;
+        }
+
+        .rating-label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            color: var(--color-text); 
+        }
+
+        .rating-bar-container {
+            background-color: var(--color-medium-gray); 
+            border-radius: 25px;
+            height: 12px;
+            overflow: hidden;
+        }
+        
+        .rating-bar {
+            background-color: var(--color-primary); /* Air France primary blue bar fill */
+            height: 100%;
+            border-radius: 25px;
+        }
+
+        /* Media Queries for smaller devices */
+        @media (max-width: 576px) {
+            .score-and-text {
+                flex-direction: column;
+                text-align: center;
+                gap: 1.5rem;
+            }
+            .verdict-main {
+                padding: 1rem;
+                min-height: 200px;
+            }
+            .content-wrapper {
+                padding: 1rem;
+            }
+            .pros-cons {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            .pros, .cons {
+                padding: 0.75rem;
+            }
+            .verdict-header h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="verdict-card">
+        <div class="verdict-header">
+            <h1>THE VERDICT</h1>
+            <img src="https://media.aviationeagle.co.uk/loghi/europa/AirFranceHopLogoFull.png" alt="AirFrance Logo" class="company-logo">
+        </div>
+
+        <div class="verdict-main" style="background-image: url('https://img.pikbest.com/backgrounds/20190214/colorful-gradient-pseudo-3d-abstract-space-background_1861114.jpg!w700wp');">
+            <div class="content-wrapper">
+                <div class="score-and-text">
+                    
+                    <div class="score-circle">
+                         <div class="score-circle-progress" style="background: conic-gradient(var(--color-primary) 0% 70%, transparent 70% 100%);"></div>
+                        <div class="score-circle-inner">
+                            <span>7</span>
+                        </div>
+                    </div>
+                    
+                    <div class="verdict-text">
+                        <p>
+                            Air France remains a solid, premium choice for the inflight experience, thanks to its elegant cabins, comfortable aircraft, and impeccable onboard service. However, the overall journey is heavily penalized by significant ground logistics inefficiencies, including rude staff at the Turin station, suboptimal online services, and the structural inconvenience of Terminal 2G at Paris Charles de Gaulle.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pros-cons">
+            <div class="pros">
+                <span class="title">Pros</span>
+                <ul>
+                    <li>Modern and quiet aircraft</li>
+                    <li>Elegant and well-maintained cabin</li>
+                    <li>Attentive and professional onboard service</li>
+                    <li>Great overall seating comfort</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <span class="title">Cons</span>
+                <ul>
+                    <li>Rude ground service at Turin (TRN)</li>
+                    <li>Substandard, slow online platforms</li>
+                    <li>Slow and unreliable customer support</li>
+                    <li>Inconvenient logistics at Terminal 2G (CDG)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="ratings">
+            <div class="rating-item">
+                <div class="rating-label">
+                    <span>Aircraft Comfort & Cabin</span>
+                    <span>8.5</span>
+                </div>
+                <div class="rating-bar-container">
+                    <div class="rating-bar" style="width: 85%;"></div>
+                </div>
+            </div>
+            
+            <div class="rating-item">
+                <div class="rating-label">
+                    <span>Onboard Service</span>
+                    <span>8.0</span>
+                </div>
+                <div class="rating-bar-container">
+                    <div class="rating-bar" style="width: 80%;"></div>
+                </div>
+            </div>
+            
+            <div class="rating-item">
+                <div class="rating-label">
+                    <span>Online Services & Customer Support</span>
+                    <span>4.0</span>
+                </div>
+                <div class="rating-bar-container">
+                    <div class="rating-bar" style="width: 40%;"></div>
+                </div>
+            </div>
+
+            <div class="rating-item">
+                <div class="rating-label">
+                    <span>Ground Logistics & Terminal (T2G)</span>
+                    <span>4.5</span>
+                </div>
+                <div class="rating-bar-container">
+                    <div class="rating-bar" style="width: 45%;"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
