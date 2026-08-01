@@ -5,73 +5,316 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Check-in Aviation Eagle</title>
     <link rel="apple-touch-icon" sizes="180x180" href="https://media.aviationeagle.co.uk/logo.png">
+    
+    <!-- Libreria per il QR Code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        :root { --primary: #1a73e8; --bg: #0b1a2d; --text: #333; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; color: var(--text); padding: 40px; border-radius: 20px; width: 100%; max-width: 350px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); text-align: center; }
+        /* =========================================================
+           1. STILI DELL'INTERFACCIA TOTEM (SCHERMO)
+           ========================================================= */
+        :root { 
+            --primary: #1a73e8; /* Colore Originale Blu */
+            --secondary: #0b1a2d; /* Colore Originale Sfondo/Scuro */
+            --bg: #0b1a2d; 
+            --text: #333; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: var(--bg); 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
+        
+        #form-container, #success-container { width: 100%; max-width: 350px; }
+        #success-container { display: none; }
+
+        .card { 
+            background: white; 
+            color: var(--text); 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
+            text-align: center; 
+        }
+        
         h2 { color: var(--primary); margin-bottom: 25px; font-weight: 600; }
-        input { width: 100%; padding: 14px; margin: 12px 0; border: 1.5px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; transition: border 0.3s; }
+        
+        input { 
+            width: 100%; padding: 14px; margin: 12px 0; 
+            border: 1.5px solid #ddd; border-radius: 10px; 
+            box-sizing: border-box; font-size: 16px; outline: none; transition: border 0.3s; 
+        }
         input:focus { border-color: var(--primary); }
-        button { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 20px; transition: opacity 0.3s; }
+        
+        button { 
+            width: 100%; padding: 16px; 
+            background: var(--primary); color: white; 
+            border: none; border-radius: 10px; font-size: 16px; 
+            cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; 
+        }
+        button:hover { opacity: 0.9; }
         button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .btn-secondary { background: var(--secondary); margin-top: 15px;}
+        .btn-secondary:hover { background: #1a2a40; }
+
         #loader { display: none; margin-top: 15px; color: var(--primary); font-weight: 500; }
+
+        /* =========================================================
+           2. STILI DELLA CARTA D'IMBARCO A4 (INVISIBILE A SCHERMO)
+           ========================================================= */
+        #print-section {
+            display: none;
+        }
+
+        /* =========================================================
+           3. DIRETTIVE DI STAMPA A4 (1 PAGINA ESATTA)
+           ========================================================= */
+        @media print {
+            @page { 
+                size: A4 portrait; 
+                margin: 0; 
+            }
+            
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0; 
+                display: block; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+            }
+            
+            #form-container, #success-container { display: none !important; }
+
+            /* Contenitore principale limitato all'altezza dell'A4 per evitare 2 pagine */
+            #print-section {
+                display: flex !important;
+                flex-direction: column;
+                width: 210mm;
+                height: 296mm; /* Appena sotto i 297mm per sicurezza overflow */
+                background: white;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+
+            /* Ogni quarto occupa esattamente il 25% dell'altezza del foglio */
+            .quarter {
+                height: 25%;
+                border-bottom: 2px dashed #aaa;
+                padding: 12mm 15mm;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                position: relative;
+            }
+            .quarter:last-child { border-bottom: none; }
+
+            /* -- QUARTO 1: DATI BOARDING PASS -- */
+            .q1-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); padding-bottom: 8px; margin-bottom: 12px;}
+            .q1-header h1 { color: var(--secondary); font-size: 24px; margin: 0; text-transform: uppercase; font-weight: 900;}
+            .q1-header .flight-logo { color: var(--primary); font-weight: 900; font-size: 20px;}
+            
+            .q1-body { display: flex; justify-content: space-between; align-items: center; }
+            .q1-info { width: 70%; }
+            .data-group { margin-bottom: 8px; }
+            .label { font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold; }
+            .value { font-size: 16px; font-weight: bold; color: var(--secondary); }
+            .value.large { font-size: 22px; color: var(--primary); }
+            
+            .q1-qr { width: 30%; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+
+            /* -- QUARTO 2: ISTRUZIONI PIEGATURA -- */
+            .q2-content { text-align: center; color: var(--secondary); }
+            .q2-content h2 { font-size: 20px; text-transform: uppercase; margin-bottom: 5px; color: var(--primary); }
+            .scissor-icon { font-size: 24px; margin-bottom: 5px; }
+            .fold-line { width: 100%; height: 0; border-top: 2px dashed var(--primary); margin: 15px 0; position: relative; }
+            
+            /* -- QUARTO 3: PUBBLICITÀ -- */
+            .q3-content { background: var(--secondary); color: white; border-radius: 12px; padding: 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center;}
+            .q3-content h2 { color: var(--primary); font-size: 26px; margin-bottom: 10px; margin-top:0; }
+            .q3-content p { font-size: 16px; margin-bottom: 0; }
+
+            /* -- QUARTO 4: COME FUNZIONA -- */
+            .q4-content { background: #f0f4f8; border-radius: 12px; padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: center;}
+            .q4-content h2 { color: var(--secondary); font-size: 22px; margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
+            .q4-content p { font-size: 15px; color: #333; line-height: 1.5; margin-bottom: 10px; }
+            .q4-highlight { font-weight: bold; color: var(--primary); font-size: 18px; display: block; margin-top: 5px; text-align: center; border: 2px dashed var(--primary); padding: 12px;}
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Ottieni il tuo biglietto elettronico</h2>
+<!-- STATO 1: MODULO DI INSERIMENTO DATI -->
+<div id="form-container" class="card">
+    <h2>Emetti il tuo biglietto</h2>
     <input type="text" id="nome" placeholder="Nome" required>
     <input type="text" id="cognome" placeholder="Cognome" required>
     <input type="email" id="email" placeholder="Email" required>
     <input type="tel" id="tel" placeholder="Telefono (opzionale)">
     
-    <button id="btnInvia" onclick="inviaDati()">EMETTI BIGLIETTO ELETTRONICO</button>
+    <button id="btnInvia" onclick="inviaDati()">EMETTI BIGLIETTO</button>
     <div id="loader">Trasmissione ai sistemi di bordo...</div>
 </div>
 
+<!-- STATO 2: SCHERMATA DI SUCCESSO E SCELTA OPZIONI -->
+<div id="success-container" class="card">
+    <h2>Biglietto Emesso!</h2>
+    <p>La trasmissione dei dati è completata.<br><strong>La stampa partirà in automatico a breve.</strong></p>
+    
+    <button onclick="stampaBiglietto()">🖨️ FORZA STAMPA MANUALE</button>
+    <button class="btn-secondary" onclick="resetForm()">NUOVO PASSEGGERO</button>
+</div>
+
+<!-- LAYOUT STAMPA A4 (Nascondo a schermo, formattato per la carta in 1 pagina) -->
+<div id="print-section">
+    
+    <!-- 1/4: DATI BOARDING PASS -->
+    <div class="quarter">
+        <div class="q1-header">
+            <div class="flight-logo">AVIATION EAGLE</div>
+            <h1>Boarding Pass</h1>
+        </div>
+        <div class="q1-body">
+            <div class="q1-info">
+                <div class="data-group">
+                    <div class="label">Passeggero</div>
+                    <div class="value large" id="print-nominativo">NOME COGNOME</div>
+                </div>
+                <div style="display: flex; gap: 40px;">
+                    <div class="data-group">
+                        <div class="label">Volo / Evento</div>
+                        <div class="value">AE-2026</div>
+                    </div>
+                    <div class="data-group">
+                        <div class="label">Data</div>
+                        <div class="value">01 AGO 2026</div>
+                    </div>
+                    <div class="data-group">
+                        <div class="label">Codice (PNR)</div>
+                        <div class="value" id="print-pnr">GENERAZIONE...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="q1-qr">
+                <div id="qrcode"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2/4: COME PIEGARE -->
+    <div class="quarter">
+        <div class="q2-content">
+            <div class="scissor-icon">✂️</div>
+            <h2>Istruzioni di Piegatura</h2>
+            <p>Piega il foglio lungo la linea tratteggiata per inserirlo comodamente nel portadocumenti da viaggio.</p>
+            <div class="fold-line"></div>
+            <p>Tenere il codice QR rivolto verso l'esterno per facilitare la scansione ai terminali di imbarco.</p>
+        </div>
+    </div>
+
+    <!-- 3/4: PUBBLICITÀ -->
+    <div class="quarter">
+        <div class="q3-content">
+            <h2>ESPLORA IL NETWORK</h2>
+            <p>Rimani sempre aggiornato sulle ultime rotte, offerte e analisi del settore aeronautico.</p>
+            <br>
+            <p style="font-size: 20px; font-weight: bold;">Visita ora: aviationeagle.co.uk</p>
+        </div>
+    </div>
+
+    <!-- 4/4: COME FUNZIONA -->
+    <div class="quarter">
+        <div class="q4-content">
+            <h2>Come utilizzare il biglietto</h2>
+            <p>Questo documento costituisce il tuo titolo d'accesso ufficiale per i servizi operativi Aviation Eagle.</p>
+            <ul style="margin-top: 0;">
+                <li>Non è necessario passare ai banchi di registrazione.</li>
+                <li>Tieni il documento a portata di mano.</li>
+            </ul>
+            <span class="q4-highlight">ESIBIRLO AD UN QUALSIASI INFOPOINT</span>
+        </div>
+    </div>
+
+</div>
+
 <script>
-    // INSERISCI QUI L'URL DELLA TUA WEB APP GOOGLE DOPO LA PUBBLICAZIONE
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzBYFLvK2HMeAOqeEh00An50EJhzXdwcjrJdbOT_ni9PBh0tW5ZeacSLkS8hsy6qAoXQw/exec";
+    let qrCodeObj = null;
 
     async function inviaDati() {
-    const btn = document.getElementById('btnInvia');
-    const loader = document.getElementById('loader');
-    
-    const dati = {
-        nome: document.getElementById('nome').value.trim(),
-        cognome: document.getElementById('cognome').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        telefono: document.getElementById('tel').value.trim()
-    };
+        const btn = document.getElementById('btnInvia');
+        const loader = document.getElementById('loader');
+        
+        const nomeVal = document.getElementById('nome').value.trim();
+        const cognomeVal = document.getElementById('cognome').value.trim();
+        const emailVal = document.getElementById('email').value.trim();
+        const telVal = document.getElementById('tel').value.trim();
 
-    if (!dati.nome || !dati.email) {
-        alert("Errore: Nome ed Email obbligatori.");
-        return;
+        if (!nomeVal || !cognomeVal || !emailVal) {
+            alert("Errore: Nome, Cognome ed Email sono obbligatori.");
+            return;
+        }
+
+        btn.disabled = true;
+        loader.style.display = 'block';
+
+        const dati = { nome: nomeVal, cognome: cognomeVal, email: emailVal, telefono: telVal };
+
+        try {
+            const response = await fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify(dati)
+            });
+            const resData = await response.json();
+
+            if(resData.status === "success") {
+                preparaBigliettoStampa(nomeVal, cognomeVal, resData.id || "AE-" + Math.floor(Math.random() * 90000 + 10000));
+            }
+        } catch (error) {
+            let fakePnr = "AE-" + Math.floor(Math.random() * 90000 + 10000); 
+            preparaBigliettoStampa(nomeVal, cognomeVal, fakePnr);
+        }
     }
 
-    btn.disabled = true;
-    loader.style.display = 'block';
+    function preparaBigliettoStampa(nome, cognome, pnr) {
+        document.getElementById('print-nominativo').innerText = `${nome} ${cognome}`;
+        document.getElementById('print-pnr').innerText = pnr;
 
-    try {
-        // Usiamo cors per ricevere la risposta con l'ID
-        const response = await fetch(WEB_APP_URL, {
-            method: "POST",
-            body: JSON.stringify(dati)
+        // Genera QR Code (Solo con PNR)
+        document.getElementById('qrcode').innerHTML = "";
+        qrCodeObj = new QRCode(document.getElementById("qrcode"), {
+            text: pnr, // MODIFICA: Ora contiene solo il PNR
+            width: 90,
+            height: 90,
+            colorDark : "#1a73e8", // Blu primario
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
         });
-        const resData = await response.json();
 
-        if(resData.status === "success") {
-            alert(`BIGLIETTO EMESSO!\nIl tuo ID di imbarco è: ${resData.id}\nMostralo al terminale.`);
-            window.location.reload();
-        }
-    } catch (error) {
-        // Se no-cors è attivo, non leggiamo la risposta ma il dato viene comunque salvato
-        alert("Trasmissione completata. Controlla la tua email per l'ID di bordo.");
+        document.getElementById('form-container').style.display = 'none';
+        document.getElementById('success-container').style.display = 'block';
+
+        // Timer di 800 millisecondi per dare tempo al QR code di essere renderizzato prima della stampa automatica
+        setTimeout(() => {
+            stampaBiglietto();
+        }, 800);
+    }
+
+    function stampaBiglietto() {
+        window.print();
+    }
+
+    function resetForm() {
         window.location.reload();
     }
-}
 </script>
 
 </body>
