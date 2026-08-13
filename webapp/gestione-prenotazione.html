@@ -1,1 +1,905 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Eagle - Gestione Prenotazioni (AE-PAX-6)</title>
+    <style>
+        :root {
+            --primary: #0a192f;
+            --accent: #2c5282;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --border-color: #e2e8f0;
+            --disabled-bg: #edf2f7;
+        }
 
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- SCHERMATA DI ACCESSO --- */
+        #loginOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: var(--primary);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: opacity 0.5s ease;
+        }
+
+        #loginOverlay img {
+            height: 120px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        }
+
+        #loginOverlay h2 {
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        #accessCode {
+            padding: 15px;
+            width: 300px;
+            text-align: center;
+            font-size: 1.5em;
+            letter-spacing: 5px;
+            border-radius: 8px;
+            border: 2px solid var(--accent);
+            background: #0d213f;
+            color: white;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #accessCode:focus {
+            border-color: #4299e1;
+        }
+
+        #loginError {
+            color: #fc8181;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* --- APP PRINCIPALE --- */
+        #mainApp {
+            display: none; /* Nascosto di default fino allo sblocco */
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header img {
+            height: 50px;
+        }
+
+        h1, h2, h3, h4 {
+            margin-top: 0;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="text"], input[type="number"], input[type="date"], select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+
+        input:disabled {
+            background-color: var(--disabled-bg);
+            color: #718096;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+        .esenta-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8em;
+            color: #e53e3e;
+            background: #fff5f5;
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: 1px solid #fed7d7;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: var(--primary);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+
+        .btn-esenta-tutti {
+            background-color: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+        .btn-esenta-tutti:hover { background-color: #feb2b2; }
+
+        .btn-approva-tutti {
+            background-color: #c6f6d5;
+            color: #276749;
+            border: 1px solid #9ae6b4;
+        }
+        .btn-approva-tutti:hover { background-color: #9ae6b4; }
+
+        .pax-card {
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            background: #fafafa;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+            position: relative;
+        }
+
+        .pax-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: #edf2f7;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .main-contact-selector {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e2e8f0;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .loyalty-section {
+            grid-column: span 2;
+            background: #e2e8f0;
+            border: 1px dashed #a0aec0;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .loyalty-section h5 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            font-size: 1em;
+            border-bottom: 1px solid #cbd5e0;
+            padding-bottom: 5px;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .required-star {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BLOCCO ACCESSO -->
+    <div id="loginOverlay">
+        <img src="https://static.wixstatic.com/media/261a20_3c2ddc89a2804670a17c690e053d28a1~mv2.png" alt="Aviation Eagle Logo">
+        <h2>TERMINALE PROTETTO AE-PAX-6</h2>
+        <input type="password" id="accessCode" placeholder="Inserire codice" onkeypress="checkCode(event)" autocomplete="off">
+        <p style="font-size:0.8em; margin-top:10px; color:#a0aec0;">Premere INVIO per sbloccare</p>
+        <p id="loginError">Codice di autorizzazione non valido.</p>
+    </div>
+
+    <!-- APP PRINCIPALE -->
+    <div id="mainApp">
+        <header>
+            <img src="https://static.wixstatic.com/media/261a20_3c2ddc89a2804670a17c690e053d28a1~mv2.png" alt="Aviation Eagle Logo">
+            <h2>TERMINALE OPERATIVO PRENOTAZIONI (AE-PAX-6)</h2>
+        </header>
+
+        <div class="section-card">
+            <h3 class="section-title">1. Configurazione Documento & Loghi</h3>
+            <div class="grid-3">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="toggleAirlineLogo" onchange="toggleView('airlineLogoUrlContainer')">
+                    <label for="toggleAirlineLogo">Aggiungi Logo Compagnia Aerea (Alto Dx)</label>
+                </div>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="togglePointSky" onchange="togglePointSky()">
+                    <label for="togglePointSky">Attiva Modulo Point&Sky</label>
+                </div>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="toggleBottomLogos" onchange="toggleView('bottomLogosContainer')">
+                    <label for="toggleBottomLogos">Aggiungi Loghi Footer (Max 3)</label>
+                </div>
+            </div>
+            
+            <div id="airlineLogoUrlContainer" class="form-group hidden">
+                <label>URL Logo Compagnia Aerea:</label>
+                <input type="text" id="airlineLogoUrl" placeholder="https://...">
+            </div>
+
+            <div id="bottomLogosContainer" class="grid-3 hidden" style="margin-top: 10px;">
+                <div class="form-group">
+                    <label>URL Logo Alleanza:</label>
+                    <input type="text" id="logoAlleanza" placeholder="es. SkyTeam, Star Alliance...">
+                </div>
+                <div class="form-group">
+                    <label>URL Logo Gruppo:</label>
+                    <input type="text" id="logoGruppo" placeholder="es. Lufthansa Group...">
+                </div>
+                <div class="form-group">
+                    <label>URL Logo Programma Fedeltà:</label>
+                    <input type="text" id="logoFedelta" placeholder="es. Miles&More...">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h3 class="section-title">2. Dati Fondamentali Prenotazione (Obbligatori)</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Codice PNR (Reference) <span class="required-star">*</span></label>
+                    <input type="text" id="pnr" required style="text-transform: uppercase; font-weight: bold;">
+                </div>
+                <div class="form-group">
+                    <label>Compagnia Aerea <span class="required-star">*</span></label>
+                    <input type="text" id="compagniaAerea" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h3 class="section-title">3. Gestione Passeggeri</h3>
+            <div class="form-group" style="width: 200px;">
+                <label>Numero Passeggeri:</label>
+                <input type="number" id="numPax" min="1" max="10" value="1" onchange="renderPaxForms()">
+            </div>
+            
+            <div id="paxContainer">
+                <!-- Pax forms will be generated here by JS -->
+            </div>
+        </div>
+
+        <div class="section-card" id="mainContactSection">
+            <h3 class="section-title">4. Dati Completi Contatto Principale (Intestatario Delega)</h3>
+            <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">Questi dati si applicheranno al passeggero selezionato come "Contatto Principale".</p>
+            <div class="grid-2" id="mainContactFields">
+                <!-- Fields generated dynamically with "Esenta" option -->
+            </div>
+        </div>
+
+        <button class="btn" onclick="generateDocument()">GENERA DOCUMENTO FORMATTATO</button>
+    </div>
+
+    <script>
+        // LOGIC FOR LOCK SCREEN
+        function checkCode(e) {
+            if (e.key === 'Enter') {
+                const code = document.getElementById('accessCode').value;
+                if (code === '3802301747') {
+                    document.getElementById('loginOverlay').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loginOverlay').style.display = 'none';
+                        document.getElementById('mainApp').style.display = 'block';
+                        document.getElementById('accessCode').value = ''; // clear for security
+                    }, 500);
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                    document.getElementById('accessCode').value = '';
+                }
+            }
+        }
+
+        // Utilities to create fields with "Esenta" button
+        function createField(id, label, isRequired = false, type = 'text', widthClass = 'form-group', extraClass='') {
+            const reqStar = isRequired ? '<span class="required-star">*</span>' : '';
+            const esentaBtn = !isRequired ? 
+                `<label class="esenta-box"><input type="checkbox" onchange="toggleEsenta('${id}')" data-target="${id}"> Esenta</label>` 
+                : '';
+            
+            return `
+                <div class="${widthClass} ${extraClass}" id="container_${id}">
+                    <label>${label} ${reqStar}</label>
+                    <div class="input-group">
+                        <input type="${type}" id="${id}" class="form-input">
+                        ${esentaBtn}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleEsenta(fieldId) {
+            const input = document.getElementById(fieldId);
+            const checkbox = document.querySelector(`input[data-target="${fieldId}"]`);
+            
+            if(checkbox.checked) {
+                input.setAttribute('data-old-value', input.value);
+                input.value = 'ESENTATO';
+                input.disabled = true;
+            } else {
+                input.disabled = false;
+                input.value = input.getAttribute('data-old-value') || '';
+            }
+        }
+
+        function esentaTuttiPax(paxId) {
+            const paxCard = document.getElementById('pax_' + paxId);
+            const checkboxes = paxCard.querySelectorAll('.esenta-box input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                if(!cb.checked) {
+                    cb.checked = true;
+                    // Trigger manually the toggle logic
+                    const targetId = cb.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    if(input && !input.disabled) {
+                        input.setAttribute('data-old-value', input.value);
+                        input.value = 'ESENTATO';
+                        input.disabled = true;
+                    }
+                }
+            });
+        }
+
+        function approvaTuttiPax(paxId) {
+            const paxCard = document.getElementById('pax_' + paxId);
+            const checkboxes = paxCard.querySelectorAll('.esenta-box input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                if(cb.checked) {
+                    cb.checked = false;
+                    const targetId = cb.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    if(input && input.disabled) {
+                        input.disabled = false;
+                        input.value = input.getAttribute('data-old-value') || '';
+                    }
+                }
+            });
+        }
+
+        function toggleView(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        function togglePointSky() {
+            const els = document.querySelectorAll('.point-sky-field');
+            const isChecked = document.getElementById('togglePointSky').checked;
+            els.forEach(el => isChecked ? el.classList.remove('hidden') : el.classList.add('hidden'));
+        }
+
+        // Render Passenger Forms
+        function renderPaxForms() {
+            const num = document.getElementById('numPax').value;
+            const container = document.getElementById('paxContainer');
+            container.innerHTML = ''; 
+
+            for(let i=1; i<=num; i++) {
+                const paxHtml = `
+                    <div class="pax-card" id="pax_${i}">
+                        <h4>Passeggero ${i}</h4>
+                        <label class="main-contact-selector">
+                            <input type="radio" name="mainContactRadio" value="${i}" ${i===1 ? 'checked' : ''}> Contatto Principale
+                        </label>
+                        
+                        <div class="pax-header-actions">
+                            <span style="font-size:0.9em; font-weight:bold; color:#4a5568;">Azioni Rapide:</span>
+                            <button class="btn-small btn-esenta-tutti" onclick="esentaTuttiPax(${i})">Esenta Tutti i Campi Non Obbligatori</button>
+                            <button class="btn-small btn-approva-tutti" onclick="approvaTuttiPax(${i})">Approva Tutti (Ripristina)</button>
+                        </div>
+
+                        <div class="grid-2">
+                            ${createField(`pax_${i}_nome`, 'Nome', true)}
+                            ${createField(`pax_${i}_cognome`, 'Cognome', true)}
+                            ${createField(`pax_${i}_sesso`, 'Sesso (M/F/X)')}
+                            ${createField(`pax_${i}_dob`, 'Data di Nascita', false, 'date')}
+                            ${createField(`pax_${i}_cittadinanza`, 'Cittadinanza')}
+                            ${createField(`pax_${i}_luogoNascita`, 'Luogo di Nascita')}
+                            ${createField(`pax_${i}_docTipo`, 'Tipo Documento (Passaporto/ID)')}
+                            ${createField(`pax_${i}_docNum`, 'Numero Documento')}
+                            ${createField(`pax_${i}_docRilascio`, 'Ente di Rilascio')}
+                            ${createField(`pax_${i}_docScadenza`, 'Data Scadenza', false, 'date')}
+                            ${createField(`pax_${i}_posto`, 'Preferenza Posto (Finestrino/Corridoio/Ecc)')}
+                            ${createField(`pax_${i}_pasto`, 'Pasto Speciale')}
+                            
+                            <!-- SEZIONE PROGRAMMI FEDELTA' SEPARATA -->
+                            <div class="loyalty-section">
+                                <h5>Programmi Fedeltà & Riconoscimenti</h5>
+                                <div class="grid-2">
+                                    ${createField(`pax_${i}_ffp`, 'Frequent Flyer Programme (Altre Compagnie Aeree)', false, 'text', 'form-group')}
+                                    ${createField(`pax_${i}_ps_card`, 'Tessera Point&Sky (Aviation Eagle)', false, 'text', 'form-group', 'point-sky-field hidden')}
+                                </div>
+                            </div>
+
+                            ${createField(`pax_${i}_wchr`, 'Assistenza Speciale (WCHR) SI/NO')}
+                            ${createField(`pax_${i}_mediche`, 'Note Mediche (Allergie/Pacemaker)')}
+                            ${createField(`pax_${i}_emgNome`, 'Nome Contatto Emergenza')}
+                            ${createField(`pax_${i}_emgTel`, 'Tel Contatto Emergenza')}
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', paxHtml);
+            }
+            togglePointSky(); // re-apply visibility based on global setting
+        }
+
+        // Render Main Contact Form
+        function renderMainContactFields() {
+            const container = document.getElementById('mainContactFields');
+            container.innerHTML = `
+                ${createField('main_cf', 'Codice Fiscale')}
+                ${createField('main_indirizzo', 'Indirizzo e Civico')}
+                ${createField('main_citta', 'Città')}
+                ${createField('main_prov', 'Provincia')}
+                ${createField('main_cap', 'CAP')}
+                ${createField('main_email', 'E-mail')}
+                ${createField('main_tel', 'Telefono Principale')}
+            `;
+        }
+
+        // Initialize
+        window.onload = () => {
+            renderPaxForms();
+            renderMainContactFields();
+        };
+
+        // Generation Logic
+        function getValue(id) {
+            const el = document.getElementById(id);
+            if(!el) return '';
+            if(el.disabled || el.value === 'ESENTATO') return 'N/A';
+            return el.value || 'N/A';
+        }
+
+        function generateDocument() {
+            const pnr = document.getElementById('pnr').value.toUpperCase();
+            const compagnia = document.getElementById('compagniaAerea').value;
+            
+            if(!pnr || !compagnia) {
+                alert("PNR e Compagnia Aerea sono obbligatori!");
+                return;
+            }
+
+            const numPax = document.getElementById('numPax').value;
+            const mainContactIndex = document.querySelector('input[name="mainContactRadio"]:checked').value;
+            const mainNome = getValue(`pax_${mainContactIndex}_nome`);
+            const mainCognome = getValue(`pax_${mainContactIndex}_cognome`);
+            const mainDOB = getValue(`pax_${mainContactIndex}_dob`);
+            const mainLuogo = getValue(`pax_${mainContactIndex}_luogoNascita`);
+            const mainCittadinanza = getValue(`pax_${mainContactIndex}_cittadinanza`);
+            const mainDocNum = getValue(`pax_${mainContactIndex}_docNum`);
+            const mainDocScadenza = getValue(`pax_${mainContactIndex}_docScadenza`);
+            
+            const mainCF = getValue('main_cf');
+            const mainIndirizzo = getValue('main_indirizzo');
+            const mainCitta = getValue('main_citta');
+            const mainProv = getValue('main_prov');
+            const mainCap = getValue('main_cap');
+            const mainEmail = getValue('main_email');
+            const mainTel = getValue('main_tel');
+
+            const hasAirlineLogo = document.getElementById('toggleAirlineLogo').checked;
+            const airlineLogoUrl = document.getElementById('airlineLogoUrl').value;
+            
+            const hasPointSky = document.getElementById('togglePointSky').checked;
+            const pointSkyLogo = "https://media.aviationeagle.co.uk/Point_SkyLogo-removebg-preview.png";
+
+            const hasBottomLogos = document.getElementById('toggleBottomLogos').checked;
+            const logoAll = document.getElementById('logoAlleanza').value;
+            const logoGrp = document.getElementById('logoGruppo').value;
+            const logoFed = document.getElementById('logoFedelta').value;
+
+            const now = new Date();
+            const dateString = now.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeString = now.toLocaleTimeString('it-IT');
+
+            // COSTITUZIONE HTML DI STAMPA
+            let printHtml = `
+            <!DOCTYPE html>
+            <html lang="it">
+            <head>
+                <meta charset="UTF-8">
+                <title>Gestione Prenotazione - ${pnr}</title>
+                <style>
+                    @media print {
+                        @page { size: A4; margin: 12mm 15mm; }
+                        body { margin: 0; }
+                        .no-print { display: none !important; }
+                        .page-break { page-break-after: always; }
+                        .avoid-break { page-break-inside: avoid; }
+                    }
+                    body {
+                        font-family: 'Helvetica Neue', Arial, sans-serif;
+                        color: #1a1a1a;
+                        background: #fff;
+                        line-height: 1.4;
+                        font-size: 10pt;
+                    }
+                    .print-btn {
+                        display: block;
+                        width: 100%;
+                        background: #2c5282;
+                        color: #fff;
+                        text-align: center;
+                        padding: 15px;
+                        font-size: 1.2em;
+                        font-weight: bold;
+                        text-decoration: none;
+                        cursor: pointer;
+                        border: none;
+                    }
+                    .document-wrapper {
+                        max-width: 210mm;
+                        margin: 0 auto;
+                        background: white;
+                    }
+                    .header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        border-bottom: 2px solid #000;
+                        padding-bottom: 10px;
+                        margin-bottom: 15px;
+                    }
+                    .header img.ae-logo { height: 60px; }
+                    .header img.extra-logo { height: 50px; object-fit: contain; }
+                    
+                    .meta-info {
+                        font-size: 8pt;
+                        color: #555;
+                        margin-bottom: 15px;
+                        font-style: italic;
+                    }
+                    
+                    h1 { font-size: 14pt; text-align: center; text-transform: uppercase; margin: 10px 0; background: #eee; padding: 5px; }
+                    h2 { font-size: 12pt; color: #2c5282; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-top: 15px;}
+                    
+                    .data-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 8px 20px;
+                        margin-bottom: 10px;
+                    }
+                    .data-row {
+                        display: flex;
+                        border-bottom: 1px dotted #ccc;
+                        padding: 4px 0;
+                    }
+                    .data-label {
+                        font-weight: bold;
+                        width: 45%;
+                        font-size: 9pt;
+                    }
+                    .data-value {
+                        width: 55%;
+                        font-family: monospace;
+                        font-size: 10pt;
+                    }
+                    
+                    .tagliando {
+                        border: 2px dashed #666;
+                        padding: 15px;
+                        margin-top: 20px;
+                        background: #fdfdfd;
+                    }
+                    .tagliando h3 { text-align: center; font-size: 11pt; margin-top:0;}
+                    
+                    .firma-box {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-top: 40px;
+                    }
+                    .firma-line {
+                        border-top: 1px solid #000;
+                        width: 200px;
+                        text-align: center;
+                        padding-top: 5px;
+                        font-size: 9pt;
+                    }
+                    
+                    .legal-text {
+                        font-size: 8.5pt;
+                        text-align: justify;
+                        margin-bottom: 10px;
+                    }
+                    .legal-text ul { padding-left: 20px; margin-top: 5px; }
+                    
+                    .footer-logos {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 30px;
+                        margin-top: 30px;
+                        border-top: 1px solid #ccc;
+                        padding-top: 15px;
+                    }
+                    .footer-logos img { height: 40px; object-fit: contain; }
+                    .ps-logo { height: 30px; vertical-align: middle; margin-left: 10px; }
+                </style>
+            </head>
+            <body>
+                <button class="print-btn no-print" onclick="window.print()">🖨️ STAMPA PAGINA</button>
+                <div class="document-wrapper">
+            `;
+
+            // GENERA DOCUMENTO 1 PER OGNI PASSEGGERO
+            for(let i=1; i<=numPax; i++) {
+                const pNome = getValue(`pax_${i}_nome`);
+                const pCognome = getValue(`pax_${i}_cognome`);
+                
+                printHtml += `
+                    <div class="${i > 1 ? 'page-break' : ''}">
+                        <div class="header">
+                            <img src="https://static.wixstatic.com/media/261a20_3c2ddc89a2804670a17c690e053d28a1~mv2.png" class="ae-logo">
+                            ${hasAirlineLogo && airlineLogoUrl ? `<img src="${airlineLogoUrl}" class="extra-logo">` : ''}
+                        </div>
+                        <div class="meta-info">
+                            Questa delega è emanata ${dateString} alle ore ${timeString} da Aviation Eagle.<br>
+                            ©2026 by Aviation Eagle | www.aviationeagle.co.uk | privacy@aviationeagle.net<br>
+                            <strong>DOCUMENTO 1</strong>
+                        </div>
+                        
+                        <h1>PASSENGER MANIFEST & CLEARANCE (RACCOLTA DATI COMPLETA)</h1>
+                        <p style="font-size:9pt; text-align:center;">Protocollo Briefing Passeggero AE-PAX-6<br>
+                        FINALITÀ: Raccolta di tutti i dati necessari per prenotazioni internazionali, visti e sicurezza di volo in un unico passaggio.</p>
+                        
+                        <h2>1. ANAGRAFICA IDENTITARIA (ESATTA COME DA DOCUMENTI)</h2>
+                        <div class="data-grid">
+                            <div class="data-row"><div class="data-label">Cognome e Nome:</div><div class="data-value">${pCognome} ${pNome}</div></div>
+                            <div class="data-row"><div class="data-label">Sesso:</div><div class="data-value">${getValue(`pax_${i}_sesso`)}</div></div>
+                            <div class="data-row"><div class="data-label">Data di Nascita:</div><div class="data-value">${getValue(`pax_${i}_dob`)}</div></div>
+                            <div class="data-row"><div class="data-label">Cittadinanza:</div><div class="data-value">${getValue(`pax_${i}_cittadinanza`)}</div></div>
+                            <div class="data-row"><div class="data-label">Luogo di Nascita:</div><div class="data-value">${getValue(`pax_${i}_luogoNascita`)}</div></div>
+                        </div>
+
+                        <h2>2. DETTAGLI DOCUMENTO DI VIAGGIO (PASSAPORTO/ID)</h2>
+                        <div class="data-grid">
+                            <div class="data-row"><div class="data-label">Tipo Documento:</div><div class="data-value">${getValue(`pax_${i}_docTipo`)}</div></div>
+                            <div class="data-row"><div class="data-label">Numero:</div><div class="data-value">${getValue(`pax_${i}_docNum`)}</div></div>
+                            <div class="data-row"><div class="data-label">Ente Rilascio:</div><div class="data-value">${getValue(`pax_${i}_docRilascio`)}</div></div>
+                            <div class="data-row"><div class="data-label">Data Scadenza:</div><div class="data-value">${getValue(`pax_${i}_docScadenza`)}</div></div>
+                        </div>
+
+                        <h2>3. PREFERENZE DI BORDO & LOGISTICA</h2>
+                        <div class="data-grid">
+                            <div class="data-row"><div class="data-label">Posto:</div><div class="data-value">${getValue(`pax_${i}_posto`)}</div></div>
+                            <div class="data-row"><div class="data-label">Pasto Speciale:</div><div class="data-value">${getValue(`pax_${i}_pasto`)}</div></div>
+                            <div class="data-row"><div class="data-label">Frequent Flyer (Altre Compagnie):</div><div class="data-value">${getValue(`pax_${i}_ffp`)}</div></div>
+                            ${hasPointSky ? `<div class="data-row"><div class="data-label">Tessera Point&Sky:</div><div class="data-value">${getValue(`pax_${i}_ps_card`)} <img src="${pointSkyLogo}" class="ps-logo"></div></div>` : ''}
+                        </div>
+
+                        <h2>4. CLEARANCE SANITARIA E MOBILITÀ</h2>
+                        <div class="data-grid">
+                            <div class="data-row"><div class="data-label">Assistenza WCHR:</div><div class="data-value">${getValue(`pax_${i}_wchr`)}</div></div>
+                            <div class="data-row"><div class="data-label">Note mediche:</div><div class="data-value">${getValue(`pax_${i}_mediche`)}</div></div>
+                        </div>
+
+                        <h2>5. CONTATTO DI EMERGENZA (GROUND SUPPORT)</h2>
+                        <div class="data-grid">
+                            <div class="data-row"><div class="data-label">Nome:</div><div class="data-value">${getValue(`pax_${i}_emgNome`)}</div></div>
+                            <div class="data-row"><div class="data-label">Telefono:</div><div class="data-value">${getValue(`pax_${i}_emgTel`)}</div></div>
+                        </div>
+
+                        <div class="tagliando avoid-break">
+                            <h3>✂️ TAGLIANDO DA RITAGLIARE PER IL CHECK-IN DESK ✂️</h3>
+                            <div class="data-grid">
+                                <div class="data-row"><div class="data-label">PASSEGGERO:</div><div class="data-value">${pCognome} ${pNome}</div></div>
+                                <div class="data-row"><div class="data-label">PNR:</div><div class="data-value"><strong>${pnr}</strong></div></div>
+                            </div>
+                            <p style="font-size: 8.5pt; margin: 10px 0;">Dichiaro che i dati forniti sono veritieri e conformi al documento d'identità in mio possesso. Sollevo Aviation Eagle da responsabilità in caso di dati errati o documenti scaduti.</p>
+                            <div class="firma-box" style="margin-top: 20px;">
+                                <div class="firma-line">DATA: ____ / ____ / ________</div>
+                                <div class="firma-line">FIRMA DEL PASSEGGERO</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } // end for passeggeri
+
+            // GENERA DOCUMENTO 2 E 3 (DELEGA UNIFICATA PER CONTATTO PRINCIPALE)
+            printHtml += `
+                <div class="page-break"></div>
+                <div class="header">
+                    <img src="https://static.wixstatic.com/media/261a20_3c2ddc89a2804670a17c690e053d28a1~mv2.png" class="ae-logo">
+                    ${hasAirlineLogo && airlineLogoUrl ? `<img src="${airlineLogoUrl}" class="extra-logo">` : ''}
+                </div>
+                <div class="meta-info">
+                    Questa delega è emanata ${dateString} alle ore ${timeString} da Aviation Eagle.<br>
+                    ©2026 by Aviation Eagle | www.aviationeagle.co.uk | privacy@aviationeagle.net<br>
+                    <strong>DOCUMENTI 2 e 3</strong>
+                </div>
+
+                <h1>MODULO DI DELEGA E MANLEVA OPERATIVA</h1>
+                <p style="text-align:center; font-size: 9pt;">Rif. Servizi: Gestione Prenotazioni, Clearance, Pratiche Doganali e Gestione Tecnica</p>
+                
+                <h2>1. DATI DEL TITOLARE (Contatto Principale)</h2>
+                <div class="data-grid">
+                    <div class="data-row"><div class="data-label">Nome e Cognome:</div><div class="data-value">${mainCognome} ${mainNome}</div></div>
+                    <div class="data-row"><div class="data-label">Luogo e Data Nascita:</div><div class="data-value">${mainLuogo} - ${mainDOB}</div></div>
+                    <div class="data-row"><div class="data-label">Codice Fiscale:</div><div class="data-value">${mainCF}</div></div>
+                    <div class="data-row"><div class="data-label">Nazionalità:</div><div class="data-value">${mainCittadinanza}</div></div>
+                    <div class="data-row"><div class="data-label">Passaporto N.:</div><div class="data-value">${mainDocNum} (Scad: ${mainDocScadenza})</div></div>
+                    <div class="data-row"><div class="data-label">Indirizzo:</div><div class="data-value">${mainIndirizzo}, ${mainCitta} (${mainProv}) - ${mainCap}</div></div>
+                    <div class="data-row"><div class="data-label">E-Mail:</div><div class="data-value">${mainEmail}</div></div>
+                    <div class="data-row"><div class="data-label">Telefono:</div><div class="data-value">${mainTel}</div></div>
+                </div>
+                
+                <div style="background: #f5f5f5; padding: 10px; margin: 15px 0; border: 1px solid #ddd;">
+                    <strong>Dettagli Volo Affidato:</strong><br>
+                    Compagnia Aerea: <strong>${compagnia}</strong> &nbsp;|&nbsp; Codice PNR: <strong>${pnr}</strong>
+                </div>
+
+                <h2>2. OGGETTO DELLA DELEGA</h2>
+                <p class="legal-text">Il sottoscritto DELEGA formalmente il team di Aviation Eagle a:</p>
+                <ul class="legal-text">
+                    <li>Accedere, visualizzare, modificare e gestire la prenotazione aerea (PNR) presso vettori e aggregatori per finalità di monitoraggio e supporto tecnico.</li>
+                    <li>Inserire i dati obbligatori nei sistemi APIS/Secure Flight.</li>
+                    <li>Inoltrare richieste per autorizzazioni elettroniche (ESTA, eTA, ETIAS, UK ETA) se richiesto.</li>
+                    <li>Gestire comunicazioni con autorità doganali e consolari per conto del titolare.</li>
+                </ul>
+
+                <h2>3. DICHIARAZIONE DI MANLEVA E ESONERO RESPONSABILITÀ (Disclaimer)</h2>
+                <ul class="legal-text">
+                    <li><strong>Veridicità dei Dati:</strong> Si assume la piena responsabilità penale e civile per la veridicità dei dati forniti (inclusi precedenti penali, respingimenti passati o condizioni sanitarie).</li>
+                    <li><strong>Decisioni Sovrane:</strong> Riconosce che l'approvazione di visti/autorizzazioni e l'autorizzazione finale all'ingresso nel Paese sono decisioni discrezionali delle autorità governative locali. Aviation Eagle non garantisce l'esito positivo delle pratiche.</li>
+                    <li><strong>Esclusione di Responsabilità:</strong> Solleva Aviation Eagle e i suoi operatori da ogni responsabilità per:
+                        <ul>
+                            <li>Diniego di imbarco, modifiche, ritardi o cancellazioni da parte della compagnia aerea.</li>
+                            <li>Respingimento alla frontiera per motivi di sicurezza o documentali.</li>
+                            <li>Sanzioni doganali derivanti dalla mancata o errata dichiarazione di beni/valuta.</li>
+                            <li>Qualsiasi forma di danno diretto o indiretto derivante da decisioni unilaterali del vettore, eventi meteo, scioperi o enti terzi.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Obbligo di Controllo:</strong> Resta responsabilità ultima del passeggero verificare la validità dei propri documenti prima della partenza.</li>
+                </ul>
+
+                <h2>4. TRATTAMENTO DATI (GDPR) e VALIDITÀ</h2>
+                <p class="legal-text">I dati forniti saranno trattati nel rispetto del Regolamento UE 2016/679 (GDPR). Il titolare dei dati autorizza Aviation Eagle al trattamento dei dati sensibili e dei dettagli di viaggio al solo fine di espletare l'incarico di gestione della prenotazione sopra indicata. I dati non saranno ceduti a terzi per scopi commerciali.<br>
+                La presente delega ha validità dalla data della firma fino al completamento dell’itinerario di volo, salvo revoca scritta.</p>
+
+                <div class="firma-box avoid-break">
+                    <div class="firma-line">LUOGO E DATA<br>_______________________</div>
+                    <div class="firma-line">FIRMA DEL PASSEGGERO / DELEGANTE<br>(Legale e Leggibile)</div>
+                    <div class="firma-line" style="color:#2c5282;">TIMBRO E FIRMA<br><strong>AVIATION EAGLE</strong></div>
+                </div>
+            `;
+
+            if(hasBottomLogos && (logoAll || logoGrp || logoFed)) {
+                printHtml += `<div class="footer-logos avoid-break">`;
+                if(logoAll) printHtml += `<img src="${logoAll}" alt="Alleanza">`;
+                if(logoGrp) printHtml += `<img src="${logoGrp}" alt="Gruppo">`;
+                if(logoFed) printHtml += `<img src="${logoFed}" alt="Programma Fedeltà">`;
+                printHtml += `</div>`;
+            }
+
+            printHtml += `
+                </div> <!-- /document-wrapper -->
+            </body>
+            </html>`;
+
+            const printWin = window.open('', '_blank');
+            if(printWin) {
+                printWin.document.open();
+                printWin.document.write(printHtml);
+                printWin.document.close();
+            } else {
+                alert("Per favore abilita i popup per visualizzare il documento di stampa.");
+            }
+        }
+    </script>
+</body>
+</html>
