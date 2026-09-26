@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Eagle - Digital Business Card</title>
+    <style>
+        :root {
+            /* Colori del brand: Blu aviazione profondo, bianco e un accento per i link */
+            --primary-color: #0b3d91; 
+            --secondary-color: #f4f7f6;
+            --accent-color: #ffd700;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+
+        .vcard-container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 380px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            text-align: center;
+            padding: 35px 25px;
+            box-sizing: border-box;
+        }
+
+        .header-icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+
+        .company-name {
+            margin: 0;
+            font-size: 28px;
+            color: var(--primary-color);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            margin: 5px 0 25px 0;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .promo-box {
+            background: linear-gradient(135deg, var(--primary-color), #1e5bbd);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+            box-shadow: 0 4px 15px rgba(11, 61, 145, 0.2);
+        }
+
+        .promo-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+        }
+
+        .promo-text {
+            font-size: 13px;
+            margin: 0 0 12px 0;
+            line-height: 1.5;
+            opacity: 0.95;
+        }
+
+        .promo-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+
+        .promo-link:hover {
+            opacity: 0.8;
+        }
+
+        .contact-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 25px 0;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            background: var(--secondary-color);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .contact-item:hover {
+            transform: translateY(-2px);
+            background: #e9ecef;
+        }
+
+        .contact-icon {
+            font-size: 22px;
+            margin-right: 15px;
+        }
+
+        .contact-text {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .save-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            margin-bottom: 25px;
+            box-sizing: border-box;
+        }
+
+        .save-btn:hover {
+            background-color: #082d6e;
+            transform: scale(1.02);
+        }
+
+        .footer {
+            font-size: 12px;
+            color: #999;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="vcard-container">
+        <!-- Intestazione -->
+        <div class="header-icon">✈️</div>
+        <h1 class="company-name">Aviation Eagle</h1>
+        <p class="subtitle">Servizi & Consulenza Aeronautica<br>Ultra Conveniente</p>
+
+        <!-- Programma Promozionale -->
+        <div class="promo-box">
+            <h2 class="promo-title">Point&Sky Program</h2>
+            <p class="promo-text">Accumula punti sulle tue ricerche ed evita i costi di gestione. Risparmio garantito su ogni volo.</p>
+            <!-- Inserisci qui l'URL reale della pagina Point&Sky al posto di "#" -->
+            <a href="https://pointsky.aviationeagle.co.uk" class="promo-link">Scopri Point&Sky →</a>
+        </div>
+
+        <!-- Contatti -->
+        <ul class="contact-list">
+            <li>
+                <!-- Il prefisso tel: permette la composizione rapida da smartphone -->
+                <a href="tel:+393445941246" class="contact-item">
+                    <span class="contact-icon">📞</span>
+                    <span class="contact-text">+39 344 594 1246</span>
+                </a>
+            </li>
+            <li>
+                <!-- Il prefisso mailto: apre il client di posta predefinito -->
+                <a href="mailto:info@aviationeagle.net" class="contact-item">
+                    <span class="contact-icon">✉️</span>
+                    <span class="contact-text">info@aviationeagle.net</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://aviationeagle.co.uk" target="_blank" class="contact-item">
+                    <span class="contact-icon">🌐</span>
+                    <span class="contact-text">aviationeagle.co.uk</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Bottone Salva Contatto -->
+        <!-- Sostituisci "#" con l'URL del tuo file .vcf -->
+        <a href="https://media.aviationeagle.co.uk/contatto.vcf" class="save-btn">📥 SALVA CONTATTO IN RUBRICA</a>
+
+        <!-- Footer -->
+        <div class="footer">
+            © Aviation Eagle — Insieme sulle ali del futuro
+        </div>
+    </div>
+
+</body>
+</html>
