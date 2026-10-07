@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Check-in Aviation Eagle - Phomemo M110 Continuous</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="https://media.aviationeagle.co.uk/logo.png">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Libreria QR Code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Roboto+Mono:wght@500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root { 
+            --primary: #1a73e8;
+            --secondary: #0b1a2d;
+            --bg: #0b1a2d; 
+            --text: #333; 
+        }
+        
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: white; 
+            min-height: 100vh;
+        }
+
+        .card { 
+            background: rgba(255, 255, 255, 0.98); 
+            color: var(--text); 
+            border-radius: 24px; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6); 
+        }
+
+        /* Thermal Receipt Canvas Visual Preview */
+        .thermal-paper {
+            background-color: #ffffff;
+            color: #000000;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+        }
+
+        /* =========================================================
+           DIRETTIVE DI STAMPA A4 STANDARD
+           ========================================================= */
+        #print-section { display: none; }
+
+        @media print {
+            @page { 
+                size: A4 portrait; 
+                margin: 0; 
+            }
+            
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0; 
+                display: block; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+            }
+            
+            #form-container, #success-container, header, nav, #toastContainer { display: none !important; }
+
+            #print-section {
+                display: flex !important;
+                flex-direction: column;
+                width: 210mm;
+                height: 296mm;
+                background: white;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+
+            .quarter {
+                height: 25%;
+                border-bottom: 2px dashed #aaa;
+                padding: 12mm 15mm;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                position: relative;
+            }
+            .quarter:last-child { border-bottom: none; }
+
+            .q1-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); padding-bottom: 8px; margin-bottom: 12px;}
+            .q1-header h1 { color: var(--secondary); font-size: 24px; margin: 0; text-transform: uppercase; font-weight: 900;}
+            .q1-header .flight-logo { color: var(--primary); font-weight: 900; font-size: 20px;}
+            
+            .q1-body { display: flex; justify-content: space-between; align-items: center; }
+            .q1-info { width: 70%; }
+            .data-group { margin-bottom: 8px; }
+            .label { font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold; }
+            .value { font-size: 16px; font-weight: bold; color: var(--secondary); }
+            .value.large { font-size: 22px; color: var(--primary); }
+            
+            .q1-qr { width: 30%; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+
+            .q2-content { text-align: center; color: var(--secondary); }
+            .q2-content h2 { font-size: 20px; text-transform: uppercase; margin-bottom: 5px; color: var(--primary); }
+            .scissor-icon { font-size: 24px; margin-bottom: 5px; }
+            .fold-line { width: 100%; height: 0; border-top: 2px dashed var(--primary); margin: 15px 0; position: relative; }
+            
+            .q3-content { background: var(--secondary); color: white; border-radius: 12px; padding: 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center;}
+            .q3-content h2 { color: var(--primary); font-size: 26px; margin-bottom: 10px; margin-top:0; }
+            .q3-content p { font-size: 16px; margin-bottom: 0; }
+
+            .q4-content { background: #f0f4f8; border-radius: 12px; padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: center;}
+            .q4-content h2 { color: var(--secondary); font-size: 22px; margin-top: 0; border-left: 5px solid var(--primary); padding-left: 10px; }
+            .q4-content p { font-size: 15px; color: #333; line-height: 1.5; margin-bottom: 10px; }
+            .q4-highlight { font-weight: bold; color: var(--primary); font-size: 18px; display: block; margin-top: 5px; text-align: center; border: 2px dashed var(--primary); padding: 12px;}
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between items-center min-h-screen p-4 sm:p-6 relative">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-sm px-4 space-y-2 pointer-events-none"></div>
+
+    <header class="w-full max-w-xl flex items-center justify-between py-3.5 px-5 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-2xl mb-6 shadow-xl">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 text-white font-black px-3 py-1 rounded-xl text-sm tracking-wider shadow-md shadow-blue-600/30">
+                AE
+            </div>
+            <div>
+                <h1 class="text-sm font-extrabold text-white tracking-wide">AVIATION EAGLE</h1>
+                <p class="text-[10px] text-slate-400 font-medium">Check-In Kiosk & Phomemo M110 Engine</p>
+            </div>
+        </div>
+
+        <!-- Connection Badge -->
+        <div id="phomemoStatusBadge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span class="w-2 h-2 mr-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            M110 Non Connessa
+        </div>
+    </header>
+
+    <main class="w-full max-w-md my-auto">
+
+        <!-- STATO 1: MODULO DI INSERIMENTO DATI -->
+        <div id="form-container" class="card p-6 sm:p-8 space-y-5">
+            <div class="text-center">
+                <h2 class="text-2xl font-black text-blue-600 tracking-tight">Emetti il tuo biglietto</h2>
+                <p class="text-xs text-slate-500 mt-1">Inserisci i dati per completare la registrazione di imbarco</p>
+            </div>
+
+            <div class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nome *</label>
+                    <input type="text" id="nome" placeholder="Es. Mario" required 
+                        class="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Cognome *</label>
+                    <input type="text" id="cognome" placeholder="Es. Rossi" required 
+                        class="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition">
+                </div>
+
+                <!-- EMAIL FIELD WITH "NON HO UNA MAIL" TOGGLE -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-slate-600 uppercase">Email *</label>
+                        <button type="button" onclick="toggleNoEmail()" 
+                            class="text-xs text-blue-600 hover:text-blue-800 font-extrabold underline flex items-center gap-1 transition">
+                            <span>🚫 Non ho una mail</span>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input type="email" id="email" placeholder="nome@esempio.com" required 
+                            class="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition">
+                        <span id="noEmailBadge" class="hidden absolute right-3 top-3 bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">
+                            Stampa Termica M110
+                        </span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Telefono (Opzionale)</label>
+                    <input type="tel" id="tel" placeholder="+39 333 1234567" 
+                        class="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition">
+                </div>
+            </div>
+
+            <!-- HARDWARE CONNECTORS FOR PHOMEMO M110 -->
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">
+                        Connetti Stampante M110 (50mm)
+                    </span>
+                    <span class="text-[10px] bg-slate-200 text-slate-700 font-bold px-1.5 py-0.5 rounded">Rotolo Continuo</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="connectPhomemoUSB()" 
+                        class="px-3 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-md">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        USB Serial
+                    </button>
+                    <button type="button" onclick="connectPhomemoBLE()" 
+                        class="px-3 py-2.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-md">
+                        <svg class="w-4 h-4 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a10 10 0 0114.142 0M1.414 8.414a16 16 0 0122.628 0"></path></svg>
+                        Bluetooth BLE
+                    </button>
+                </div>
+            </div>
+
+            <!-- SUBMIT BUTTON -->
+            <button id="btnInvia" onclick="inviaDati()" 
+                class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-base rounded-xl transition shadow-lg shadow-blue-600/30 uppercase tracking-wider">
+                EMETTI BIGLIETTO
+            </button>
+
+            <div id="loader" class="hidden text-center text-xs font-bold text-blue-600 animate-pulse py-2">
+                Generazione carta d'imbarco in corso...
+            </div>
+        </div>
+
+        <!-- STATO 2: SCHERMATA DI SUCCESSO E ANTEPRIMA CARTA -->
+        <div id="success-container" class="card p-6 sm:p-8 space-y-5 hidden text-center">
+            <div>
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl font-black">
+                    ✓
+                </div>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">Biglietto Emesso!</h2>
+                <p id="successSubtitle" class="text-xs text-slate-500 mt-1">
+                    Check-in completato con successo.
+                </p>
+            </div>
+
+            <!-- LIVE CANVAS PREVIEW FOR PHOMEMO THERMAL RECEIPT -->
+            <div class="bg-slate-100 p-3.5 rounded-2xl border border-slate-200 flex flex-col items-center">
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                    Anteprima Scontrino Termico (384 × 580 px)
+                </span>
+                <div class="thermal-paper p-1.5 max-h-[320px] overflow-y-auto rounded-lg">
+                    <canvas id="receiptCanvas" width="384" height="580" class="w-[240px] h-auto block bg-white rounded"></canvas>
+                </div>
+            </div>
+
+            <!-- PRINT PROGRESS BAR -->
+            <div id="progressBox" class="hidden space-y-1.5 text-left">
+                <div class="flex justify-between text-xs font-bold text-slate-700">
+                    <span id="progressStatus">Trasmissione dati alla Phomemo M110...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                    <div id="progressBar" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-150" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- PRINT ACTION BUTTONS -->
+            <div class="space-y-2.5">
+                <button onclick="stampaPhomemoDirect()" id="btnPhomemoPrint"
+                    class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    STAMPA SU PHOMEMO M110 (50mm)
+                </button>
+
+                <button onclick="stampaBigliettoA4()" 
+                    class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
+                    🖨️ STAMPA FOGLIO A4 STANDARD
+                </button>
+
+                <button onclick="resetForm()" 
+                    class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs uppercase tracking-wider rounded-xl transition">
+                    NUOVO PASSEGGERO
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- LAYOUT STAMPA A4 (Nascondo a schermo, formattato per la carta in 1 pagina) -->
+    <div id="print-section">
+        
+        <!-- 1/4: DATI BOARDING PASS -->
+        <div class="quarter">
+            <div class="q1-header">
+                <div class="flight-logo">AVIATION EAGLE</div>
+                <h1>Boarding Pass</h1>
+            </div>
+            <div class="q1-body">
+                <div class="q1-info">
+                    <div class="data-group">
+                        <div class="label">Passeggero</div>
+                        <div class="value large" id="print-nominativo">NOME COGNOME</div>
+                    </div>
+                    <div style="display: flex; gap: 40px;">
+                        <div class="data-group">
+                            <div class="label">Volo / Evento</div>
+                            <div class="value">AE-2026</div>
+                        </div>
+                        <div class="data-group">
+                            <div class="label">Data</div>
+                            <div class="value" id="print-date">01 AGO 2026</div>
+                        </div>
+                        <div class="data-group">
+                            <div class="label">Codice (PNR)</div>
+                            <div class="value" id="print-pnr">GENERAZIONE...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="q1-qr">
+                    <div id="qrcode"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2/4: COME PIEGARE -->
+        <div class="quarter">
+            <div class="q2-content">
+                <div class="scissor-icon">✂️</div>
+                <h2>Istruzioni di Piegatura</h2>
+                <p>Piega il foglio lungo la linea tratteggiata per inserirlo comodamente nel portadocumenti da viaggio.</p>
+                <div class="fold-line"></div>
+                <p>Tenere il codice QR rivolto verso l'esterno per facilitare la scansione ai terminali di imbarco.</p>
+            </div>
+        </div>
+
+        <!-- 3/4: PUBBLICITÀ -->
+        <div class="quarter">
+            <div class="q3-content">
+                <h2>ESPLORA IL NETWORK</h2>
+                <p>Rimani sempre aggiornato sulle ultime rotte, offerte e analisi del settore aeronautico.</p>
+                <br>
+                <p style="font-size: 20px; font-weight: bold;">Visita ora: aviationeagle.co.uk</p>
+            </div>
+        </div>
+
+        <!-- 4/4: COME FUNZIONA -->
+        <div class="quarter">
+            <div class="q4-content">
+                <h2>Come utilizzare il biglietto</h2>
+                <p>Questo documento costituisce il tuo titolo d'accesso ufficiale per i servizi operativi Aviation Eagle.</p>
+                <ul style="margin-top: 0;">
+                    <li>Non è necessario passare ai banchi di registrazione.</li>
+                    <li>Tieni il documento a portata di mano.</li>
+                </ul>
+                <span class="q4-highlight">ESIBIRLO AD UN QUALSIASI INFOPOINT</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzBYFLvK2HMeAOqeEh00An50EJhzXdwcjrJdbOT_ni9PBh0tW5ZeacSLkS8hsy6qAoXQw/exec";
+        
+        let isNoEmailMode = false;
+        let currentPNR = "";
+        let currentPassengerName = "";
+
+        // Hardware Printer Connection Handle
+        let printerType = null; // 'serial' or 'ble'
+        let serialPort = null;
+        let serialWriter = null;
+        let bleDevice = null;
+        let bleCharacteristic = null;
+
+        // Custom Toast Notification System (replaces alert)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgColors = 'bg-slate-900 border-slate-700 text-white';
+            if (type === 'error') bgColors = 'bg-rose-600 border-rose-500 text-white';
+            if (type === 'success') bgColors = 'bg-emerald-600 border-emerald-500 text-white';
+            if (type === 'warning') bgColors = 'bg-amber-500 border-amber-400 text-slate-950';
+
+            toast.className = `p-3.5 rounded-xl border shadow-2xl text-xs font-bold transition-all duration-300 transform translate-y-[-10px] opacity-0 flex items-center justify-between ${bgColors} pointer-events-auto`;
+            toast.innerHTML = `<span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function toggleNoEmail() {
+            const emailInput = document.getElementById('email');
+            const noEmailBadge = document.getElementById('noEmailBadge');
+
+            isNoEmailMode = !isNoEmailMode;
+
+            if (isNoEmailMode) {
+                emailInput.value = "nessuna@aviationeagle.co.uk";
+                emailInput.readOnly = true;
+                emailInput.classList.add('bg-slate-100', 'text-slate-500');
+                noEmailBadge.classList.remove('hidden');
+                showToast("Modalità senza mail attivata. Verrà usata la Phomemo M110.", "warning");
+            } else {
+                emailInput.value = "";
+                emailInput.readOnly = false;
+                emailInput.classList.remove('bg-slate-100', 'text-slate-500');
+                noEmailBadge.classList.add('hidden');
+            }
+        }
+
+        async function connectPhomemoUSB() {
+            if (!('serial' in navigator)) {
+                showToast("La Web Serial API non è supportata da questo browser. Usa Chrome o Edge su PC/Mac.", "error");
+                return;
+            }
+            try {
+                serialPort = await navigator.serial.requestPort();
+                await serialPort.open({ baudRate: 115200 });
+                serialWriter = serialPort.writable.getWriter();
+                printerType = 'serial';
+                updatePrinterStatusBadge(true, "USB Serial");
+                showToast("Stampante Phomemo M110 connessa via USB Serial!", "success");
+            } catch (err) {
+                console.error("Errore USB Phomemo:", err);
+                showToast("Impossibile connettere via USB: " + err.message, "error");
+            }
+        }
+
+        async function connectPhomemoBLE() {
+            if (!('bluetooth' in navigator)) {
+                showToast("La Web Bluetooth API non è supportata. Usa Chrome/Edge su Android, PC o Mac.", "error");
+                return;
+            }
+            try {
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [
+                        '0000ff00-0000-1000-8000-00805f9b34fb',
+                        '0000e701-0000-1000-8000-00805f9b34fb',
+                        0xFF00, 0xE701
+                    ]
+                });
+
+                const server = await bleDevice.gatt.connect();
+                let service = null;
+
+                try {
+                    service = await server.getPrimaryService('0000ff00-0000-1000-8000-00805f9b34fb');
+                } catch(e) {
+                    service = await server.getPrimaryService(0xFF00);
+                }
+
+                try {
+                    bleCharacteristic = await service.getCharacteristic('0000ff02-0000-1000-8000-00805f9b34fb');
+                } catch(e) {
+                    bleCharacteristic = await service.getCharacteristic(0xFF02);
+                }
+
+                printerType = 'ble';
+                updatePrinterStatusBadge(true, "BLE " + (bleDevice.name || "M110"));
+                showToast("Stampante Phomemo M110 connessa via Bluetooth BLE!", "success");
+            } catch (err) {
+                console.error("Errore BLE Phomemo:", err);
+                showToast("Connessione Bluetooth fallita: " + err.message, "error");
+            }
+        }
+
+        function updatePrinterStatusBadge(connected, name = "") {
+            const badge = document.getElementById('phomemoStatusBadge');
+            if (connected) {
+                badge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                badge.innerHTML = `<span class="w-2 h-2 mr-1.5 rounded-full bg-emerald-400"></span> Phomemo (${name})`;
+            } else {
+                badge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                badge.innerHTML = `<span class="w-2 h-2 mr-1.5 rounded-full bg-amber-500 animate-pulse"></span> M110 Non Connessa`;
+            }
+        }
+
+        function drawPhomemoCanvas(nome, cognome, pnr) {
+            const canvas = document.getElementById('receiptCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 384;  // 48mm @ 203 DPI (48 bytes per line)
+            const height = 580; // High tall layout for crisp printing
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // Clear Pure White Background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = '#000000';
+
+            // Top Header Logo Box
+            ctx.fillRect(16, 20, width - 32, 54);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'black 22px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('AVIATION EAGLE', width / 2, 56);
+
+            // Sub-header
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 13px "Roboto Mono", monospace';
+            ctx.fillText('BOARDING PASS / CARTA D\'IMBARCO', width / 2, 98);
+
+            // Dashed Separator 1
+            drawDashedLine(ctx, 114, width);
+
+            // Passenger Name Section (BIG AND BOLD)
+            ctx.font = 'bold 11px "Inter", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('PASSEGGERO / PASSENGER:', 20, 136);
+
+            ctx.font = '900 24px "Inter", sans-serif';
+            let fullName = `${nome} ${cognome}`.toUpperCase();
+            if (fullName.length > 18) {
+                ctx.font = '900 20px "Inter", sans-serif';
+            }
+            if (fullName.length > 22) fullName = fullName.substring(0, 20) + '..';
+            ctx.fillText(fullName, 20, 168);
+
+            // Dashed Separator 2
+            drawDashedLine(ctx, 186, width);
+
+            // Flight details grid
+            ctx.font = 'bold 11px "Inter", sans-serif';
+            ctx.fillText('VOLO / FLIGHT', 20, 210);
+            ctx.fillText('DATA / DATE', 140, 210);
+            ctx.fillText('CODICE PNR', 260, 210);
+
+            ctx.font = '900 16px "Roboto Mono", monospace';
+            ctx.fillText('AE-2026', 20, 234);
+
+            const today = new Date().toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'}).toUpperCase();
+            ctx.fillText(today, 140, 234);
+
+            ctx.fillText(pnr, 260, 234);
+
+            // Dashed Separator 3
+            drawDashedLine(ctx, 252, width);
+
+            // Big QR Code Box Area (200x200)
+            const tempQrDiv = document.createElement('div');
+            new QRCode(tempQrDiv, {
+                text: pnr,
+                width: 190,
+                height: 190,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            setTimeout(() => {
+                const qrImg = tempQrDiv.querySelector('img') || tempQrDiv.querySelector('canvas');
+                if (qrImg) {
+                    ctx.drawImage(qrImg, (width - 190) / 2, 270);
+                }
+
+                // PNR High Contrast Box
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(40, 475, width - 80, 42);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 20px "Roboto Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`PNR: ${pnr}`, width / 2, 503);
+
+                // Footer
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 11px "Inter", sans-serif';
+                ctx.fillText('aviationeagle.co.uk • Presentare all\'Infopoint', width / 2, 542);
+                ctx.font = '10px "Roboto Mono", monospace';
+                ctx.fillText('* VERIFICARE ORARIO DI IMBARCO *', width / 2, 560);
+            }, 100);
+        }
+
+        function drawDashedLine(ctx, y, width) {
+            ctx.beginPath();
+            ctx.setLineDash([6, 4]);
+            ctx.moveTo(20, y);
+            ctx.lineTo(width - 20, y);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function buildPhomemoRasterPacket() {
+            const canvas = document.getElementById('receiptCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 384;
+            const height = canvas.height; // 580px
+
+            const bytesPerLine = width / 8; // 48 bytes
+            const rasterSize = bytesPerLine * height;
+            const rasterBuffer = new Uint8Array(rasterSize);
+
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const pixels = imgData.data;
+
+            // Pure thresholding for max crispness
+            let bufIdx = 0;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x += 8) {
+                    let byteVal = 0;
+                    for (let bit = 0; bit < 8; bit++) {
+                        const pxIdx = ((y * width) + (x + bit)) * 4;
+                        const r = pixels[pxIdx];
+                        const g = pixels[pxIdx + 1];
+                        const b = pixels[pxIdx + 2];
+                        const lum = (0.299 * r + 0.587 * g + 0.114 * b);
+
+                        if (lum < 160) { // Dark pixel -> 1
+                            byteVal |= (0x80 >> bit);
+                        }
+                    }
+                    rasterBuffer[bufIdx++] = byteVal;
+                }
+            }
+
+            const commands = [];
+
+            // 1. Reset Printer (ESC @)
+            commands.push(new Uint8Array([0x1B, 0x40]));
+
+            // 2. Set Paper Mode to CONTINUOUS ROLL (0x1F, 0x11, 0x0B)
+            commands.push(new Uint8Array([0x1F, 0x11, 0x0B]));
+
+            // 3. Set Maximum Darkness/Density (Level 15: 0x1B, 0x4E, 0x04, 0x0F)
+            commands.push(new Uint8Array([0x1B, 0x4E, 0x04, 0x0F]));
+
+            // 4. Line Spacing 0
+            commands.push(new Uint8Array([0x1B, 0x33, 0x00]));
+
+            // 5. GS v 0 Raster Command Header
+            const xL = bytesPerLine & 0xFF;        // 48 (0x30)
+            const xH = (bytesPerLine >> 8) & 0xFF; // 0
+            const yL = height & 0xFF;              // Low byte height (580 = 0x44)
+            const yH = (height >> 8) & 0xFF;       // High byte height (580 = 0x02)
+
+            const gsHeader = new Uint8Array([0x1D, 0x76, 0x30, 0x00, xL, xH, yL, yH]);
+            commands.push(gsHeader);
+            commands.push(rasterBuffer);
+
+            // 6. Controlled Feed for Tear Bar Clearance (Feed 4 lines: ESC d 4 = 0x1B, 0x64, 0x04)
+            commands.push(new Uint8Array([0x1B, 0x64, 0x04]));
+
+            // 7. Phomemo End-of-Print Sequence & Hard Stop Reset
+            commands.push(new Uint8Array([0x1F, 0xF0, 0x05, 0x00, 0x1F, 0xF0, 0x03, 0x00]));
+            commands.push(new Uint8Array([0x1B, 0x40])); // Hard motor stop reset
+
+            // Merge into single byte array
+            const totalLen = commands.reduce((acc, c) => acc + c.length, 0);
+            const fullPacket = new Uint8Array(totalLen);
+            let offset = 0;
+            for (const cmd of commands) {
+                fullPacket.set(cmd, offset);
+                offset += cmd.length;
+            }
+
+            return fullPacket;
+        }
+
+        async function inviaDati() {
+            const btn = document.getElementById('btnInvia');
+            const loader = document.getElementById('loader');
+            
+            const nomeVal = document.getElementById('nome').value.trim();
+            const cognomeVal = document.getElementById('cognome').value.trim();
+            const emailVal = document.getElementById('email').value.trim();
+            const telVal = document.getElementById('tel').value.trim();
+
+            if (!nomeVal || !cognomeVal || !emailVal) {
+                showToast("Errore: Compila tutti i campi obbligatori (*).", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+
+            const dati = { nome: nomeVal, cognome: cognomeVal, email: emailVal, telefono: telVal };
+
+            let pnrCode = "AE-" + Math.floor(Math.random() * 90000 + 10000);
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    body: JSON.stringify(dati)
+                });
+                const resData = await response.json();
+                if(resData.status === "success" && resData.id) {
+                    pnrCode = resData.id;
+                }
+            } catch (error) {
+                console.warn("Invio remoto non disponibile, proseguiamo in locale:", error);
+            }
+
+            preparaBigliettoStampa(nomeVal, cognomeVal, pnrCode);
+        }
+
+        function preparaBigliettoStampa(nome, cognome, pnr) {
+            currentPNR = pnr;
+            currentPassengerName = `${nome} ${cognome}`;
+
+            // Populate A4 Print Section
+            document.getElementById('print-nominativo').innerText = currentPassengerName.toUpperCase();
+            document.getElementById('print-pnr').innerText = pnr;
+            document.getElementById('print-date').innerText = new Date().toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'}).toUpperCase();
+
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
+                text: pnr,
+                width: 90,
+                height: 90,
+                colorDark : "#1a73e8",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            // Render Thermal Receipt Canvas
+            drawPhomemoCanvas(nome, cognome, pnr);
+
+            // Hide Form, Show Success Container
+            document.getElementById('form-container').classList.add('hidden');
+            document.getElementById('success-container').classList.remove('hidden');
+
+            // Auto-trigger printing if no-email mode or printer is connected
+            setTimeout(() => {
+                if (isNoEmailMode || printerType !== null) {
+                    stampaPhomemoDirect();
+                } else {
+                    showToast("Biglietto emesso! Puoi procedere alla stampa.", "success");
+                }
+            }, 600);
+        }
+
+        async function stampaPhomemoDirect() {
+            if (!printerType) {
+                if ('serial' in navigator) {
+                    await connectPhomemoUSB();
+                } else if ('bluetooth' in navigator) {
+                    await connectPhomemoBLE();
+                }
+            }
+
+            if (!printerType) {
+                showToast("Connetti prima la Phomemo M110 usando i pulsanti USB Serial o Bluetooth BLE.", "warning");
+                return;
+            }
+
+            const progressBox = document.getElementById('progressBox');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStatus = document.getElementById('progressStatus');
+
+            progressBox.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressPercent.innerText = '0%';
+            progressStatus.innerText = 'Preparazione trasmissione raster...';
+
+            try {
+                const packet = buildPhomemoRasterPacket();
+                const totalBytes = packet.length;
+                let bytesSent = 0;
+
+                if (printerType === 'serial' && serialWriter) {
+                    const CHUNK_SIZE = 256; // 256 bytes per chunk for Serial
+                    for (let i = 0; i < totalBytes; i += CHUNK_SIZE) {
+                        const chunk = packet.subarray(i, i + CHUNK_SIZE);
+                        await serialWriter.write(chunk);
+                        bytesSent += chunk.length;
+
+                        const percent = Math.min(100, Math.round((bytesSent / totalBytes) * 100));
+                        progressBar.style.width = `${percent}%`;
+                        progressPercent.innerText = `${percent}%`;
+                        progressStatus.innerText = `Invio alla Phomemo USB (${bytesSent}/${totalBytes} B)...`;
+
+                        await new Promise(r => setTimeout(r, 15)); // 15ms spacing
+                    }
+                } else if (printerType === 'ble' && bleCharacteristic) {
+                    const CHUNK_SIZE = 128; // 128 bytes for BLE packet safety
+                    for (let i = 0; i < totalBytes; i += CHUNK_SIZE) {
+                        const chunk = packet.subarray(i, i + CHUNK_SIZE);
+                        await bleCharacteristic.writeValue(chunk);
+                        bytesSent += chunk.length;
+
+                        const percent = Math.min(100, Math.round((bytesSent / totalBytes) * 100));
+                        progressBar.style.width = `${percent}%`;
+                        progressPercent.innerText = `${percent}%`;
+                        progressStatus.innerText = `Invio via Bluetooth BLE (${bytesSent}/${totalBytes} B)...`;
+
+                        await new Promise(r => setTimeout(r, 18));
+                    }
+                }
+
+                progressStatus.innerText = 'Stampa completata con successo!';
+                showToast("Stampa completata con successo sulla Phomemo M110!", "success");
+
+                setTimeout(() => {
+                    progressBox.classList.add('hidden');
+                }, 3000);
+
+            } catch (err) {
+                console.error("Errore durante la stampa:", err);
+                progressStatus.innerText = 'Errore di trasmissione.';
+                showToast("Errore durante la stampa: " + err.message, "error");
+            }
+        }
+
+        function stampaBigliettoA4() {
+            window.print();
+        }
+
+        function resetForm() {
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>
