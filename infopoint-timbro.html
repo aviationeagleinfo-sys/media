@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aviation Eagle™ - Terminal Receipt & AEROS System</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#FF6600',
+                            darkorange: '#E05500',
+                            black: '#111111',
+                            card: '#1A1A1A',
+                            gray: '#282828',
+                            lightgray: '#F4F4F5'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Roboto Mono', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto+Mono:wght@500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0A0A0A; 
+            color: #FFFFFF; 
+            min-height: 100vh;
+        }
+
+        /* Thermal Paper Simulation Preview */
+        .thermal-paper {
+            background-color: #FFFFFF;
+            color: #000000;
+            box-shadow: 0 15px 35px rgba(255, 102, 0, 0.2), 0 0 0 1px rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF6600;
+            border-radius: 3px;
+        }
+
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            #receiptCanvas {
+                width: 100% !important;
+                max-width: 80mm !important;
+                height: auto !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 space-y-2 pointer-events-none"></div>
+
+    <!-- MAIN HEADER -->
+    <header class="no-print w-full bg-brand-black border-b border-zinc-800 sticky top-0 z-40 backdrop-blur-md bg-opacity-90">
+        <div class="max-w-6xl mx-auto px-4 py-3.5 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <img src="https://media.aviationeagle.co.uk/Aviation-Eagle-Compact-TM-RBG.png" 
+                     alt="Aviation Eagle™ Logo" 
+                     class="h-10 w-auto object-contain bg-white/10 p-1 rounded-lg border border-white/20"
+                     onerror="this.src='https://placehold.co/120x40/FF6600/ffffff?text=AE+Logo'">
+                <div>
+                    <h1 class="text-lg font-black tracking-wider text-white flex items-center gap-1">
+                        AVIATION EAGLE<span class="text-brand-orange">™</span>
+                    </h1>
+                    <p class="text-xs text-zinc-400 font-medium">System Scontrini Termici & AEROS Points</p>
+                </div>
+            </div>
+
+            <!-- Printer Connection Status & Actions -->
+            <div class="flex items-center gap-2">
+                <div id="printerStatusBadge" class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                    <span class="w-2.5 h-2.5 mr-2 rounded-full bg-zinc-500"></span>
+                    Stampante Non Connessa
+                </div>
+                <button onclick="connectBLE()" class="bg-zinc-800 hover:bg-zinc-700 text-brand-orange border border-brand-orange/40 hover:border-brand-orange text-xs font-black px-3.5 py-2 rounded-xl transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a10 10 0 0114.142 0M1.414 8.414a16 16 0 0122.628 0"></path></svg>
+                    Bluetooth
+                </button>
+                <button onclick="connectUSB()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-black px-3.5 py-2 rounded-xl transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    USB
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: CONTROLS & FORM (7/12) -->
+        <div class="no-print lg:col-span-7 space-y-5">
+            
+            <div class="bg-brand-card border border-zinc-800 rounded-2xl p-5 md:p-7 space-y-6 shadow-2xl">
+                <div>
+                    <h2 class="text-2xl font-black text-white flex items-center gap-2.5">
+                        <span class="w-3 h-6 bg-brand-orange rounded-full inline-block"></span>
+                        Compila Dati Scontrino
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-1">Scegli la modalità di stampa e inserisci i dettagli del cliente o i prodotti</p>
+                </div>
+
+                <!-- USER PERSONAL DETAILS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider mb-1.5">Nome Cliente *</label>
+                        <input type="text" id="inputNome" placeholder="Es. Mario" oninput="updateReceiptPreview()"
+                            class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white font-semibold focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider mb-1.5">Cognome Cliente *</label>
+                        <input type="text" id="inputCognome" placeholder="Es. Rossi" oninput="updateReceiptPreview()"
+                            class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white font-semibold focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition">
+                    </div>
+                </div>
+
+                <!-- SELECT TYPE OF RECEIPT (3 OPTIONS) -->
+                <div>
+                    <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider mb-2">Tipologia di Scontrino *</label>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <button type="button" id="btnTypeInfo" onclick="switchReceiptType('INFO_POINT')" 
+                            class="py-3 px-2 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition flex flex-col items-center justify-center gap-1 border-brand-orange bg-brand-orange/10 text-brand-orange shadow-lg shadow-brand-orange/10">
+                            <span class="text-base">ℹ️</span>
+                            <span>Info Point</span>
+                        </button>
+                        <button type="button" id="btnTypeCard" onclick="switchReceiptType('CONSEGNA_TESSERA')" 
+                            class="py-3 px-2 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition flex flex-col items-center justify-center gap-1 border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500">
+                            <span class="text-base">💳</span>
+                            <span>Tessera</span>
+                        </button>
+                        <button type="button" id="btnTypeItems" onclick="switchReceiptType('SCONTRINO_ARTICOLI')" 
+                            class="py-3 px-2 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition flex flex-col items-center justify-center gap-1 border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500">
+                            <span class="text-base">🛒</span>
+                            <span>Articoli</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: INFO POINT (NO AEROS POINTS) -->
+                <div id="sectionInfoPoint" class="space-y-4 pt-3 border-t border-zinc-800">
+                    <div>
+                        <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider mb-1.5">Categoria Servizio Info Point</label>
+                        <select id="selectInfoCategory" onchange="updateReceiptPreview()"
+                            class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-orange font-bold">
+                            <option value="Info">ℹ️ Info Generali</option>
+                            <option value="Voli">✈️ Assistenza Voli</option>
+                            <option value="Point&Sky">🌤️ Point&Sky™ Experience</option>
+                            <option value="Altro">⚙️ Altro Servizio / Operazione</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider mb-1.5">Promemoria Operazione / Note</label>
+                        <textarea id="inputInfoNotes" rows="3" placeholder="Es. Verificato gate di imbarco A12 e rilasciato pass prioritario" oninput="updateReceiptPreview()"
+                            class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white font-medium focus:outline-none focus:border-brand-orange transition resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: CONSEGNA TESSERA (WITH AEROS POINTS) -->
+                <div id="sectionConsegnaTessera" class="space-y-4 pt-3 border-t border-zinc-800 hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider mb-1.5">Numero Tessera *</label>
+                            <input type="text" id="inputNumTessera" placeholder="AE-8890-2026" oninput="updateReceiptPreview()"
+                                class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white font-mono font-bold focus:outline-none focus:border-brand-orange">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-zinc-300 uppercase tracking-wider mb-1.5">Livello Card</label>
+                            <select id="selectTierCard" onchange="updateReceiptPreview()"
+                                class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-orange font-bold">
+                                <option value="Bronze MEMBER">Bronze Member</option>
+                                <option value="Iron MEMBER">Iron Member</option>
+                                <option value="|Silver MEMBER|">Silver Member</option>
+                                <option value="|GOLD CLUB|">Gold Club</option>
+                                <option value="|Emerald Superior|">Bronze Member</option>
+                                <option value="|VIP EXECUTIVE PLATINUM|">VIP Executive Platinum</option>
+                                <option value="DIAMOND SKY™">DIAMOND Sky™</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 bg-zinc-900/90 border border-brand-orange/30 rounded-xl space-y-3">
+                        <label class="block text-xs font-black text-brand-orange uppercase tracking-wider">Punti AEROS Associati alla Tessera</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-zinc-400 mb-1">Punti Accreditati (+)</label>
+                                <input type="number" id="inputAerosAddedCard" value="300" step="50" min="0" oninput="updateReceiptPreview()"
+                                    class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-zinc-400 mb-1">Saldo Totale AEROS</label>
+                                <input type="number" id="inputAerosTotalCard" value="1500" step="50" min="0" oninput="updateReceiptPreview()"
+                                    class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-brand-orange font-mono font-bold focus:outline-none focus:border-brand-orange">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: SCONTRINO ARTICOLI (INFINITE ITEMS WITH AUTOMATIC AEROS TOTAL) -->
+                <div id="sectionScontrinoArticoli" class="space-y-4 pt-3 border-t border-zinc-800 hidden">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-black text-brand-orange uppercase tracking-wider flex items-center gap-1.5">
+                            🛒 Articoli Scontrino (Prezzi in Punti AEROS)
+                        </label>
+                        <button type="button" onclick="addArticleRow()" class="bg-brand-orange hover:bg-brand-darkorange text-white text-xs font-black px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
+                            + Aggiungi Articolo
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Articles List -->
+                    <div id="articlesContainer" class="space-y-3.5 max-h-[280px] overflow-y-auto pr-1">
+                        <!-- Dynamic Rows Injected Here via JS -->
+                    </div>
+
+                    <!-- Calculated Total Box -->
+                    <div class="bg-zinc-900 border border-brand-orange/40 rounded-xl p-3.5 flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-black text-zinc-300 uppercase tracking-wider block">TOTALE COMPLESSIVO AEROS</span>
+                            <span class="text-[10px] text-zinc-400 font-medium">Calcolato automaticamente</span>
+                        </div>
+                        <div id="displayTotalAeros" class="text-2xl font-black font-mono text-brand-orange">
+                            0 AEROS
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRANSMISSION PROGRESS BAR (0% TO 100%) -->
+                <div id="progressBox" class="hidden bg-zinc-900 border border-brand-orange/40 rounded-xl p-4 space-y-2">
+                    <div class="flex justify-between items-center text-xs font-black text-white">
+                        <span id="progressStatusText" class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-brand-orange animate-ping"></span>
+                            Inizio trasmissione dati...
+                        </span>
+                        <span id="progressPercentText" class="text-brand-orange font-mono text-sm">0%</span>
+                    </div>
+                    <div class="w-full bg-zinc-800 rounded-full h-3 overflow-hidden p-0.5 border border-zinc-700">
+                        <div id="progressBarFill" class="bg-brand-orange h-full rounded-full transition-all duration-150 shadow-md shadow-brand-orange/50" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- MAIN PRINT ACTIONS -->
+                <div class="pt-3 border-t border-zinc-800 space-y-3">
+                    <button onclick="printThermalDirect()" id="btnMainPrint"
+                        class="w-full py-4 bg-brand-orange hover:bg-brand-darkorange text-white font-black text-sm uppercase tracking-wider rounded-xl transition shadow-xl shadow-brand-orange/30 flex items-center justify-center gap-2.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        STAMPA SCONTRINO TERMICO (384px / 50mm)
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="window.print()" 
+                            class="py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs uppercase tracking-wider rounded-xl border border-zinc-700 transition flex items-center justify-center gap-1.5">
+                            🖨️ Stampa PDF / A4
+                        </button>
+                        <button onclick="resetReceiptForm()" 
+                            class="py-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl border border-zinc-800 transition">
+                            🔄 Reset
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: LIVE CANVAS RECEIPT PREVIEW (5/12) -->
+        <div class="lg:col-span-5 flex flex-col items-center justify-start space-y-4">
+            
+            <div class="no-print w-full flex justify-between items-center px-1">
+                <span class="text-xs font-black uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Anteprima Scontrino Termico
+                </span>
+                <span id="canvasHeightBadge" class="text-[10px] bg-zinc-800 text-brand-orange font-mono font-bold px-2.5 py-1 rounded-full border border-zinc-700">
+                    Altezza: 0px (Auto-Stop)
+                </span>
+            </div>
+
+            <!-- RECEIPT CANVAS CONTAINER -->
+            <div class="thermal-paper p-4 md:p-5 rounded-2xl border-2 border-zinc-700 flex flex-col items-center max-w-[360px] w-full shadow-2xl">
+                <!-- CANVAS FOR RASTER GENERATION -->
+                <canvas id="receiptCanvas" width="384" height="600" class="w-full h-auto block bg-white rounded-lg"></canvas>
+            </div>
+
+            <div class="no-print text-[11px] text-zinc-500 text-center max-w-xs space-y-1">
+                <p class="font-bold text-zinc-400">⚡ Taglio Carta Automatico Anti-Spreco</p>
+                <p>L'altezza del foglio si adatta al contenuto esatto ed esegue il taglio immediato senza stampare spazi bianchi!</p>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="no-print w-full border-t border-zinc-800/80 bg-brand-black py-4 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-zinc-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p>© 2026 Aviation Eagle™ System. Tutti i diritti riservati.</p>
+            <p class="font-mono text-[11px] text-zinc-400">media.aviationeagle.co.uk • Anti-Paper-Waste Engine</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        // System State Variables
+        let currentType = 'INFO_POINT'; // 'INFO_POINT', 'CONSEGNA_TESSERA', 'SCONTRINO_ARTICOLI'
+        let currentPNR = "AE-" + Math.floor(100000 + Math.random() * 900000);
+        let dynamicCanvasHeight = 600;
+
+        // Articles Array for Unlimited Items
+        let articlesList = [
+            { id: 1, desc: "Modellino Volo Eagle 1:400", qty: 1, price: 450 },
+            { id: 2, desc: "Pass Lounge VIP Point&Sky", qty: 2, price: 300 }
+        ];
+
+        // Logo Handler
+        let logoImage = new Image();
+        logoImage.crossOrigin = "anonymous";
+        logoImage.src = "https://media.aviationeagle.co.uk/Aviation-Eagle-Compact-TM-RBG.png";
+
+        // Hardware Printer Handles
+        let printerType = null; // 'ble' or 'serial'
+        let bleDevice = null;
+        let bleCharacteristic = null;
+        let serialPort = null;
+        let serialWriter = null;
+
+        // Custom Toast System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgColors = 'bg-zinc-900 border-zinc-700 text-white';
+            if (type === 'error') bgColors = 'bg-rose-600 border-rose-500 text-white';
+            if (type === 'success') bgColors = 'bg-emerald-600 border-emerald-500 text-white';
+            if (type === 'warning') bgColors = 'bg-brand-orange border-brand-darkorange text-white';
+
+            toast.className = `p-3.5 rounded-xl border shadow-2xl text-xs font-bold transition-all duration-300 transform translate-y-[-10px] opacity-0 flex items-center justify-between ${bgColors} pointer-events-auto`;
+            toast.innerHTML = `<span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('inputNome').value = "Mario";
+            document.getElementById('inputCognome').value = "Rossi";
+
+            renderArticlesInputs();
+
+            logoImage.onload = () => updateReceiptPreview();
+            logoImage.onerror = () => updateReceiptPreview();
+
+            updateReceiptPreview();
+        });
+
+        // Switch Receipt Type
+        function switchReceiptType(type) {
+            currentType = type;
+            const btnInfo = document.getElementById('btnTypeInfo');
+            const btnCard = document.getElementById('btnTypeCard');
+            const btnItems = document.getElementById('btnTypeItems');
+
+            const secInfo = document.getElementById('sectionInfoPoint');
+            const secCard = document.getElementById('sectionConsegnaTessera');
+            const secItems = document.getElementById('sectionScontrinoArticoli');
+
+            // Reset Styles
+            const activeClass = "py-3 px-2 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition flex flex-col items-center justify-center gap-1 border-brand-orange bg-brand-orange/10 text-brand-orange shadow-lg shadow-brand-orange/10";
+            const inactiveClass = "py-3 px-2 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition flex flex-col items-center justify-center gap-1 border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500";
+
+            btnInfo.className = (type === 'INFO_POINT') ? activeClass : inactiveClass;
+            btnCard.className = (type === 'CONSEGNA_TESSERA') ? activeClass : inactiveClass;
+            btnItems.className = (type === 'SCONTRINO_ARTICOLI') ? activeClass : inactiveClass;
+
+            secInfo.classList.toggle('hidden', type !== 'INFO_POINT');
+            secCard.classList.toggle('hidden', type !== 'CONSEGNA_TESSERA');
+            secItems.classList.toggle('hidden', type !== 'SCONTRINO_ARTICOLI');
+
+            updateReceiptPreview();
+        }
+
+        // Articles List Dynamic Management
+        function renderArticlesInputs() {
+            const container = document.getElementById('articlesContainer');
+            container.innerHTML = "";
+
+            let grandTotalAeros = 0;
+
+            articlesList.forEach((item, index) => {
+                const subtotal = item.qty * item.price;
+                grandTotalAeros += subtotal;
+
+                const row = document.createElement('div');
+                row.className = "bg-zinc-900/90 border border-zinc-700/80 rounded-xl p-3 space-y-2 relative";
+                row.innerHTML = `
+                    <div class="flex justify-between items-center gap-2">
+                        <span class="text-[10px] font-black text-brand-orange uppercase">Articolo #${index + 1}</span>
+                        ${articlesList.length > 1 ? `
+                            <button type="button" onclick="removeArticleRow(${item.id})" class="text-rose-400 hover:text-rose-300 text-xs font-bold px-1">
+                                ✖ Rimuovi
+                            </button>
+                        ` : ''}
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <div class="col-span-6">
+                            <input type="text" value="${escapeHtml(item.desc)}" placeholder="Nome articolo" onchange="updateArticleItem(${item.id}, 'desc', this.value)"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-orange">
+                        </div>
+                        <div class="col-span-2">
+                            <input type="number" value="${item.qty}" min="1" onchange="updateArticleItem(${item.id}, 'qty', this.value)"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-center font-bold text-white focus:outline-none focus:border-brand-orange">
+                        </div>
+                        <div class="col-span-4">
+                            <input type="number" value="${item.price}" min="0" step="10" onchange="updateArticleItem(${item.id}, 'price', this.value)"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-brand-orange focus:outline-none focus:border-brand-orange">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('displayTotalAeros').innerText = `${grandTotalAeros} AEROS`;
+            updateReceiptPreview();
+        }
+
+        function addArticleRow() {
+            const newId = Date.now();
+            articlesList.push({ id: newId, desc: "Nuovo Articolo", qty: 1, price: 100 });
+            renderArticlesInputs();
+        }
+
+        function removeArticleRow(id) {
+            if (articlesList.length <= 1) return;
+            articlesList = articlesList.filter(item => item.id !== id);
+            renderArticlesInputs();
+        }
+
+        function updateArticleItem(id, field, value) {
+            const item = articlesList.find(i => i.id === id);
+            if (item) {
+                if (field === 'desc') item.desc = value;
+                if (field === 'qty') item.qty = Math.max(1, parseInt(value) || 1);
+                if (field === 'price') item.price = Math.max(0, parseInt(value) || 0);
+            }
+            renderArticlesInputs();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/"/g, '&quot;');
+        }
+
+        // Calculate Exact Canvas Height to Prevent Blank Paper Output
+        function calculateRequiredHeight(ctx, width) {
+            let h = 20; // Top padding
+            
+            // Header Logo Area
+            h += 75; // Logo + Name + Subtitle
+
+            // Type Banner
+            h += 48; // Banner box + margins
+
+            // Customer Name
+            h += 50; 
+
+            // Dynamic Sections
+            if (currentType === 'INFO_POINT') {
+                const notes = document.getElementById('inputInfoNotes').value.trim() || 'Informazioni e promemoria servizio';
+                ctx.font = 'bold 13px "Inter", sans-serif';
+                const lines = wrapText(ctx, notes, width - 40);
+                h += 40 + (lines.length * 20);
+            } else if (currentType === 'CONSEGNA_TESSERA') {
+                h += 130; // Card details + Aeros points table
+            } else if (currentType === 'SCONTRINO_ARTICOLI') {
+                h += 40; // Table header
+                h += (articlesList.length * 26); // Item rows
+                h += 50; // Total box
+            }
+
+            // Stamp and Signature Frame
+            h += 280; // Stamp frame
+
+            // Footer
+            h += 70; // Date and footer text
+
+            return Math.max(380, Math.ceil(h));
+        }
+
+        // RENDER THERMAL RECEIPT CANVAS WITH ENLARGED FONTS & SPACING
+        function updateReceiptPreview() {
+            const canvas = document.getElementById('receiptCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 384; // Fixed 48mm width @ 203 DPI
+
+            // 1. Measure exact required height first
+            dynamicCanvasHeight = calculateRequiredHeight(ctx, width);
+            canvas.width = width;
+            canvas.height = dynamicCanvasHeight;
+
+            document.getElementById('canvasHeightBadge').innerText = `Altezza: ${dynamicCanvasHeight}px (Auto-Stop)`;
+
+            // Clear White Background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, dynamicCanvasHeight);
+
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+
+            let cursorY = 25;
+
+            // 1. BRAND LOGO HEADER
+            if (logoImage.complete && logoImage.naturalWidth !== 0) {
+                try {
+                    const aspect = logoImage.naturalWidth / logoImage.naturalHeight;
+                    const logoW = 180;
+                    const logoH = logoW / aspect;
+                    ctx.drawImage(logoImage, (width - logoW) / 2, cursorY, logoW, Math.min(logoH, 55));
+                    cursorY += Math.min(logoH, 55) + 14;
+                } catch(e) {
+                    drawTextLogo(ctx, width, cursorY);
+                    cursorY += 50;
+                }
+            } else {
+                drawTextLogo(ctx, width, cursorY);
+                cursorY += 50;
+            }
+
+            // Large Title Header
+            ctx.fillStyle = '#000000';
+            ctx.font = '900 18px "Inter", sans-serif';
+            ctx.fillText('AVIATION EAGLE™', width / 2, cursorY);
+            cursorY += 20;
+
+            ctx.font = 'bold 12px "Roboto Mono", monospace';
+            ctx.fillText('TERMINAL & LOYALTY SERVICES', width / 2, cursorY);
+            cursorY += 22;
+
+            cursorY = drawDashedLine(ctx, cursorY, width);
+
+            // 2. RECEIPT TYPE BANNER
+            ctx.fillRect(16, cursorY, width - 32, 34);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 15px "Inter", sans-serif';
+
+            let titleText = "SCONTRINO DI SERVIZIO";
+            if (currentType === 'INFO_POINT') titleText = "RICEVUTA INFO POINT";
+            if (currentType === 'CONSEGNA_TESSERA') titleText = "RILASCIO TESSERA AEROS";
+            if (currentType === 'SCONTRINO_ARTICOLI') titleText = "SCONTRINO ARTICOLI";
+
+            ctx.fillText(titleText, width / 2, cursorY + 23);
+            cursorY += 48;
+
+            // 3. USER INFORMATION (ENLARGED)
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'left';
+
+            const nome = document.getElementById('inputNome').value.trim() || 'MARIO';
+            const cognome = document.getElementById('inputCognome').value.trim() || 'ROSSI';
+            const clienteFull = `${nome} ${cognome}`.toUpperCase();
+
+            ctx.font = 'bold 11px "Inter", sans-serif';
+            ctx.fillText('CLIENTE / USER:', 20, cursorY);
+            cursorY += 18;
+
+            ctx.font = '900 22px "Inter", sans-serif';
+            let formattedName = clienteFull;
+            if (formattedName.length > 18) formattedName = formattedName.substring(0, 16) + '..';
+            ctx.fillText(formattedName, 20, cursorY);
+            cursorY += 26;
+
+            // 4. TYPE SPECIFIC CONTENT
+
+            // TYPE A: INFO POINT (NO AEROS POINTS)
+            if (currentType === 'INFO_POINT') {
+                const cat = document.getElementById('selectInfoCategory').value;
+                const notes = document.getElementById('inputInfoNotes').value.trim() || 'Informazioni e promemoria servizio';
+
+                ctx.font = 'bold 11px "Inter", sans-serif';
+                ctx.fillText('CATEGORIA INFO POINT:', 20, cursorY);
+                ctx.font = '900 13px "Roboto Mono", monospace';
+                ctx.fillText(cat.toUpperCase(), 160, cursorY);
+                cursorY += 22;
+
+                ctx.font = 'bold 11px "Inter", sans-serif';
+                ctx.fillText('PROMEMORIA / NOTE:', 20, cursorY);
+                cursorY += 18;
+
+                ctx.font = 'bold 13px "Inter", sans-serif';
+                const wrappedNotes = wrapText(ctx, notes, width - 40);
+                wrappedNotes.forEach(line => {
+                    ctx.fillText(line, 20, cursorY);
+                    cursorY += 20;
+                });
+                cursorY += 8;
+            } 
+            // TYPE B: CONSEGNA TESSERA (WITH AEROS POINTS)
+            else if (currentType === 'CONSEGNA_TESSERA') {
+                const numCard = document.getElementById('inputNumTessera').value.trim() || 'AE-8890-2026';
+                const tier = document.getElementById('selectTierCard').value;
+                const aerosAdded = parseInt(document.getElementById('inputAerosAddedCard').value) || 0;
+                const aerosTotal = parseInt(document.getElementById('inputAerosTotalCard').value) || 0;
+
+                ctx.font = 'bold 11px "Inter", sans-serif';
+                ctx.fillText('N. TESSERA CARD:', 20, cursorY);
+                ctx.font = '900 14px "Roboto Mono", monospace';
+                ctx.fillText(numCard.toUpperCase(), 150, cursorY);
+                cursorY += 22;
+
+                ctx.font = 'bold 11px "Inter", sans-serif';
+                ctx.fillText('LIVELLO CLUB:', 20, cursorY);
+                ctx.font = '900 13px "Inter", sans-serif';
+                ctx.fillText(tier.toUpperCase(), 150, cursorY);
+                cursorY += 24;
+
+                ctx.font = '900 12px "Inter", sans-serif';
+                ctx.fillText('MOVIMENTAZIONE PUNTI AEROS:', 20, cursorY);
+                cursorY += 20;
+
+                ctx.font = 'bold 12px "Inter", sans-serif';
+                ctx.fillText('Punti Accreditati:', 20, cursorY);
+                ctx.textAlign = 'right';
+                ctx.font = '900 14px "Roboto Mono", monospace';
+                ctx.fillText(`+${aerosAdded} AEROS`, width - 20, cursorY);
+                cursorY += 22;
+
+                ctx.textAlign = 'left';
+                ctx.font = '900 13px "Inter", sans-serif';
+                ctx.fillText('SALDO TOTALE AEROS:', 20, cursorY);
+                ctx.textAlign = 'right';
+                ctx.font = '900 16px "Roboto Mono", monospace';
+                ctx.fillText(`${aerosTotal} AEROS`, width - 20, cursorY);
+                cursorY += 26;
+            } 
+            // TYPE C: SCONTRINO ARTICOLI (UNLIMITED ITEMS + TOTAL AEROS)
+            else if (currentType === 'SCONTRINO_ARTICOLI') {
+                ctx.font = '900 12px "Inter", sans-serif';
+                ctx.fillText('ARTICOLO', 20, cursorY);
+                ctx.textAlign = 'center';
+                ctx.fillText('QTY', 240, cursorY);
+                ctx.textAlign = 'right';
+                ctx.fillText('PUNTI', width - 20, cursorY);
+                cursorY += 16;
+
+                // Line under header
+                ctx.beginPath();
+                ctx.moveTo(20, cursorY);
+                ctx.lineTo(width - 20, cursorY);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#000000';
+                ctx.stroke();
+                cursorY += 18;
+
+                let grandTotal = 0;
+
+                articlesList.forEach(item => {
+                    const rowTotal = item.qty * item.price;
+                    grandTotal += rowTotal;
+
+                    ctx.textAlign = 'left';
+                    ctx.font = 'bold 12px "Inter", sans-serif';
+                    let desc = item.desc;
+                    if (desc.length > 18) desc = desc.substring(0, 16) + '..';
+                    ctx.fillText(desc, 20, cursorY);
+
+                    ctx.textAlign = 'center';
+                    ctx.font = 'bold 12px "Roboto Mono", monospace';
+                    ctx.fillText(`${item.qty}`, 240, cursorY);
+
+                    ctx.textAlign = 'right';
+                    ctx.font = '900 13px "Roboto Mono", monospace';
+                    ctx.fillText(`${rowTotal}`, width - 20, cursorY);
+
+                    cursorY += 24;
+                });
+
+                cursorY += 6;
+                // Grand Total Box
+                ctx.fillRect(20, cursorY, width - 40, 36);
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'left';
+                ctx.font = '900 13px "Inter", sans-serif';
+                ctx.fillText('TOTALE AEROS:', 32, cursorY + 23);
+
+                ctx.textAlign = 'right';
+                ctx.font = '900 17px "Roboto Mono", monospace';
+                ctx.fillText(`${grandTotal} AEROS`, width - 32, cursorY + 24);
+
+                cursorY += 48;
+                ctx.fillStyle = '#000000';
+            }
+
+            cursorY = drawDashedLine(ctx, cursorY, width);
+
+            // 5. STAMP AND SIGNATURE FRAME (RIQUADRO TIMBRO E FIRMA)
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 11px "Inter", sans-serif';
+            ctx.fillText('TIMBRO E FIRMA OPERATORE / UFFICIO:', 20, cursorY);
+            cursorY += 12;
+
+            // Dashed Frame Box
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.strokeRect(20, cursorY, width - 40, 210);
+            ctx.setLineDash([]); // Reset line dash
+
+            ctx.fillStyle = '#777777';
+            ctx.font = 'italic 10px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Spazio riservato a Timbro Ufficiale', width / 2, cursorY + 105);
+            cursorY += 240;
+            
+            
+
+            // 6. FOOTER & TIMESTAMP
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 11px "Inter", sans-serif';
+            ctx.fillText('Aviation Eagle™ • media.aviationeagle.co.uk', width / 2, cursorY);
+            cursorY += 16;
+
+            const dateStr = new Date().toLocaleString('it-IT', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            ctx.font = '900 10px "Roboto Mono", monospace';
+            ctx.fillText(`EMESSO IL: ${dateStr} • ${currentPNR}`, width / 2, cursorY);
+        }
+
+        function drawTextLogo(ctx, width, y) {
+            ctx.fillStyle = '#000000';
+            ctx.font = '900 24px "Inter", sans-serif';
+            ctx.fillText('AVIATION EAGLE', width / 2, y + 25);
+        }
+
+        function drawDashedLine(ctx, y, width) {
+            ctx.beginPath();
+            ctx.setLineDash([6, 4]);
+            ctx.moveTo(20, y);
+            ctx.lineTo(width - 20, y);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            return y + 18;
+        }
+
+        function wrapText(ctx, text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = words[0] || '';
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = ctx.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        // HARDWARE CONNECTIVITY (BLE & USB)
+        async function connectBLE() {
+            if (!('bluetooth' in navigator)) {
+                showToast("Web Bluetooth API non supportata in questo browser. Usa Chrome o Edge.", "error");
+                return;
+            }
+            try {
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [
+                        '0000ff00-0000-1000-8000-00805f9b34fb',
+                        '0000e701-0000-1000-8000-00805f9b34fb',
+                        0xFF00, 0xE701
+                    ]
+                });
+
+                const server = await bleDevice.gatt.connect();
+                let service = null;
+                try {
+                    service = await server.getPrimaryService('0000ff00-0000-1000-8000-00805f9b34fb');
+                } catch(e) {
+                    service = await server.getPrimaryService(0xFF00);
+                }
+
+                try {
+                    bleCharacteristic = await service.getCharacteristic('0000ff02-0000-1000-8000-00805f9b34fb');
+                } catch(e) {
+                    bleCharacteristic = await service.getCharacteristic(0xFF02);
+                }
+
+                printerType = 'ble';
+                updatePrinterBadge(true, bleDevice.name || "M110 BLE");
+                showToast("Stampante Bluetooth connessa con successo!", "success");
+            } catch(err) {
+                console.error("Errore BLE:", err);
+                showToast("Connessione BLE fallita: " + err.message, "error");
+            }
+        }
+
+        async function connectUSB() {
+            if (!('serial' in navigator)) {
+                showToast("Web Serial API non supportata in questo browser. Usa Chrome o Edge su PC/Mac.", "error");
+                return;
+            }
+            try {
+                serialPort = await navigator.serial.requestPort();
+                await serialPort.open({ baudRate: 115200 });
+                serialWriter = serialPort.writable.getWriter();
+                printerType = 'serial';
+                updatePrinterBadge(true, "USB Serial");
+                showToast("Stampante USB Serial connessa con successo!", "success");
+            } catch(err) {
+                console.error("Errore USB:", err);
+                showToast("Connessione USB fallita: " + err.message, "error");
+            }
+        }
+
+        function updatePrinterBadge(connected, name = "") {
+            const badge = document.getElementById('printerStatusBadge');
+            if (connected) {
+                badge.className = "inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+                badge.innerHTML = `<span class="w-2.5 h-2.5 mr-2 rounded-full bg-emerald-400"></span> Connesso: ${name}`;
+            } else {
+                badge.className = "inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-zinc-800 text-zinc-400 border border-zinc-700";
+                badge.innerHTML = `<span class="w-2.5 h-2.5 mr-2 rounded-full bg-zinc-500"></span> Stampante Non Connessa`;
+            }
+        }
+
+        // BUILD RASTER PACKET WITH HARD-STOP TO AVOID PAPER WASTE
+        function buildThermalRasterPacket() {
+            const canvas = document.getElementById('receiptCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 384;
+            const height = canvas.height; // Exact dynamic content height!
+
+            const bytesPerLine = width / 8; // 48 bytes
+            const rasterSize = bytesPerLine * height;
+            const rasterBuffer = new Uint8Array(rasterSize);
+
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const pixels = imgData.data;
+
+            let bufIdx = 0;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x += 8) {
+                    let byteVal = 0;
+                    for (let bit = 0; bit < 8; bit++) {
+                        const pxIdx = ((y * width) + (x + bit)) * 4;
+                        const r = pixels[pxIdx];
+                        const g = pixels[pxIdx + 1];
+                        const b = pixels[pxIdx + 2];
+                        const lum = (0.299 * r + 0.587 * g + 0.114 * b);
+
+                        if (lum < 160) { // Black pixel -> 1
+                            byteVal |= (0x80 >> bit);
+                        }
+                    }
+                    rasterBuffer[bufIdx++] = byteVal;
+                }
+            }
+
+            const cmds = [];
+
+            // 1. Reset Printer (ESC @)
+            cmds.push(new Uint8Array([0x1B, 0x40]));
+
+            // 2. Set Paper Mode to Continuous Roll (0x1F, 0x11, 0x0B)
+            cmds.push(new Uint8Array([0x1F, 0x11, 0x0B]));
+
+            // 3. Set Maximum Thermal Density (ESC N 4 15)
+            cmds.push(new Uint8Array([0x1B, 0x4E, 0x04, 0x0F]));
+
+            // 4. Set Line Spacing to 0
+            cmds.push(new Uint8Array([0x1B, 0x33, 0x00]));
+
+            // 5. GS v 0 Raster Header
+            const xL = bytesPerLine & 0xFF;        // 48 (0x30)
+            const xH = (bytesPerLine >> 8) & 0xFF; // 0
+            const yL = height & 0xFF;              // Dynamic height low byte
+            const yH = (height >> 8) & 0xFF;       // Dynamic height high byte
+
+            cmds.push(new Uint8Array([0x1D, 0x76, 0x30, 0x00, xL, xH, yL, yH]));
+            cmds.push(rasterBuffer);
+
+            // 6. Minimal Feed to Tear Bar (Feed only 3 lines to avoid blank paper waste!)
+            cmds.push(new Uint8Array([0x1B, 0x64, 0x03]));
+
+            // 7. Hard Motor Stop Reset Sequence
+            cmds.push(new Uint8Array([0x1F, 0xF0, 0x05, 0x00, 0x1F, 0xF0, 0x03, 0x00]));
+            cmds.push(new Uint8Array([0x1B, 0x40])); // Hard motor stop
+
+            // Merge into single array
+            const totalLen = cmds.reduce((acc, c) => acc + c.length, 0);
+            const fullPacket = new Uint8Array(totalLen);
+            let offset = 0;
+            for (const cmd of cmds) {
+                fullPacket.set(cmd, offset);
+                offset += cmd.length;
+            }
+            return fullPacket;
+        }
+
+        // DIRECT THERMAL PRINTING WITH 0-100% TRANSMISSION PROGRESS BAR
+        async function printThermalDirect() {
+            if (!printerType) {
+                showToast("Stampante non connessa! Apertura finestra di stampa di sistema...", "warning");
+                setTimeout(() => window.print(), 800);
+                return;
+            }
+
+            const progressBox = document.getElementById('progressBox');
+            const progressBarFill = document.getElementById('progressBarFill');
+            const progressPercentText = document.getElementById('progressPercentText');
+            const progressStatusText = document.getElementById('progressStatusText');
+
+            progressBox.classList.remove('hidden');
+            progressBarFill.style.width = '0%';
+            progressPercentText.innerText = '0%';
+            progressStatusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-brand-orange animate-ping"></span> Preparazione pacchetto raster (${dynamicCanvasHeight}px)...`;
+
+            try {
+                const packet = buildThermalRasterPacket();
+                const totalBytes = packet.length;
+                let bytesSent = 0;
+
+                if (printerType === 'serial' && serialWriter) {
+                    const CHUNK_SIZE = 256;
+                    for (let i = 0; i < totalBytes; i += CHUNK_SIZE) {
+                        const chunk = packet.subarray(i, i + CHUNK_SIZE);
+                        await serialWriter.write(chunk);
+                        bytesSent += chunk.length;
+
+                        const percent = Math.min(100, Math.round((bytesSent / totalBytes) * 100));
+                        progressBarFill.style.width = `${percent}%`;
+                        progressPercentText.innerText = `${percent}%`;
+                        progressStatusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Invio USB Serial (${bytesSent}/${totalBytes} B)...`;
+
+                        await new Promise(r => setTimeout(r, 12));
+                    }
+                } else if (printerType === 'ble' && bleCharacteristic) {
+                    const CHUNK_SIZE = 128;
+                    for (let i = 0; i < totalBytes; i += CHUNK_SIZE) {
+                        const chunk = packet.subarray(i, i + CHUNK_SIZE);
+                        await bleCharacteristic.writeValue(chunk);
+                        bytesSent += chunk.length;
+
+                        const percent = Math.min(100, Math.round((bytesSent / totalBytes) * 100));
+                        progressBarFill.style.width = `${percent}%`;
+                        progressPercentText.innerText = `${percent}%`;
+                        progressStatusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Trasmissione Bluetooth BLE (${bytesSent}/${totalBytes} B)...`;
+
+                        await new Promise(r => setTimeout(r, 16));
+                    }
+                }
+
+                progressStatusText.innerHTML = `✅ Stampa completata senza spreco di carta!`;
+                showToast("Scontrino stampato con successo sulla stampante termica!", "success");
+
+                setTimeout(() => {
+                    progressBox.classList.add('hidden');
+                }, 3000);
+
+            } catch(err) {
+                console.error("Errore trasmissione:", err);
+                progressStatusText.innerText = `❌ Errore durante l'invio.`;
+                showToast("Errore durante la stampa: " + err.message, "error");
+            }
+        }
+
+        function resetReceiptForm() {
+            document.getElementById('inputNome').value = "";
+            document.getElementById('inputCognome').value = "";
+            document.getElementById('inputInfoNotes').value = "";
+            document.getElementById('inputNumTessera').value = "";
+            document.getElementById('inputAerosAddedCard').value = "300";
+            document.getElementById('inputAerosTotalCard').value = "1500";
+
+            articlesList = [
+                { id: Date.now(), desc: "Articolo Esempio", qty: 1, price: 150 }
+            ];
+            renderArticlesInputs();
+
+            currentPNR = "AE-" + Math.floor(100000 + Math.random() * 900000);
+            updateReceiptPreview();
+            showToast("Modulo resettato.", "info");
+        }
+    </script>
+</body>
+</html>
